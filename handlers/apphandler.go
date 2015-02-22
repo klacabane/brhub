@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"net/http"
 
+	"labix.org/v2/mgo"
+
 	"github.com/klacabane/brhub/db"
 	"github.com/zenazn/goji/web"
 )
 
 type Context struct {
-	Db *db.DB
+	Session *mgo.Session
+}
+
+func (ctx *Context) SessionClone() *db.Session {
+	return &db.Session{ctx.Session.Clone()}
 }
 
 type AppHandler struct {
