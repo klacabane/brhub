@@ -18,11 +18,18 @@ func main() {
 	}
 	defer session.Close()
 
+	if err = session.DB("brhub").C("posts").EnsureIndexKey("-date"); err != nil {
+		log.Fatal(err)
+	}
+
 	ctx := &handlers.Context{Session: session}
 
 	mux := web.New()
-	mux.Get("/api/timeline", handlers.AppHandler{ctx, handlers.Timeline})
-	mux.Get("/api/b/:id", handlers.AppHandler{ctx, handlers.Posts})
+	mux.Get("/api/timeline/:skip/:limit", handlers.AppHandler{ctx, handlers.Timeline})
+	mux.Get("/api/b/:id", handlers.AppHandler{ctx, handlers.Items})
+
+	mux.Post("/api/item", handlers.AppHandler{ctx, handlers.CreateItem})
+	mux.Get("/api/item/:id", handlers.AppHandler{ctx, handlers.Item})
 
 	mux.Handle("/*", http.FileServer(http.Dir("./webapp")))
 

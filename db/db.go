@@ -1,7 +1,6 @@
 package db
 
 import (
-	"github.com/klacabane/brhub/models"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 )
@@ -22,12 +21,26 @@ type DB struct {
 	*mgo.Database
 }
 
-func (db *DB) Timeline(user bson.ObjectId) (posts []models.Post, err error) {
-	err = db.C("posts").Find(bson.M{}).Sort("-date").All(&posts)
+func (db *DB) Timeline(user bson.ObjectId, skip, limit int) ([]Item, error) {
+	items := make([]Item, limit)
+
+	err := db.C("items").Find(bson.M{}).Skip(skip).Limit(limit).Sort("-date").All(&items)
+	return items, err
+}
+
+func (db *DB) Items(id bson.ObjectId) ([]Item, error) {
+	items := make([]Item, 0)
+
+	err := db.C("items").Find(bson.M{"brhub._id": id}).Sort("-date").All(&items)
+	return items, err
+}
+
+func (db *DB) CreateItem(item *Item) (err error) {
+	err = db.C("items").Insert(item)
 	return
 }
 
-func (db *DB) Posts(id bson.ObjectId) (posts []models.Post, err error) {
-	err = db.C("posts").Find(bson.M{"brhub._id": id}).Sort("-date").All(&posts)
+func (db *DB) Item(id bson.ObjectId) (item Item, err error) {
+	err = db.C("items").FindId(id).One(&item)
 	return
 }
