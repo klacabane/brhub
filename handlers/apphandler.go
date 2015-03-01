@@ -5,18 +5,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"labix.org/v2/mgo"
-
 	"github.com/klacabane/brhub/db"
 	"github.com/zenazn/goji/web"
 )
 
 type Context struct {
-	Session *mgo.Session
+	Session *db.Session
 }
 
 func (ctx *Context) SessionClone() *db.Session {
-	return &db.Session{ctx.Session.Clone()}
+	return ctx.Session.Clone()
 }
 
 type AppHandler struct {
@@ -29,21 +27,27 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah AppHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
-	status, data, err := ah.H(ah.AppCtx, c, w, r)
-
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
 
+	status, data, err := ah.H(ah.AppCtx, c, w, r)
 	if err != nil {
+		w.WriteHeader(status)
 		w.Write(errJson(err.Error()))
+		return
+	}
+
+	if status == 304 {
+		w.WriteHeader(304)
 		return
 	}
 
 	js, err := json.Marshal(data)
 	if err != nil {
+		w.WriteHeader(500)
 		w.Write(errJson(http.StatusText(500)))
 		return
 	}
+	w.WriteHeader(status)
 	w.Write(js)
 }
 
