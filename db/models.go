@@ -3,14 +3,38 @@ package db
 import (
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
+
+	"code.google.com/p/go.crypto/bcrypt"
+
 	"labix.org/v2/mgo/bson"
 )
 
 type User struct {
-	Id       bson.ObjectId `json: "id" bson:"_id,omitempty"`
-	Name     string
-	Mail     string
-	Password []byte
+	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Name     string        `json:"name"`
+	Email    string        `json:"email"`
+	Password []byte        `json:"-"`
+	Token    string        `json:"token"`
+}
+
+func (user *User) SetPassword(pw string) (err error) {
+	user.Password, err = bcrypt.GenerateFromPassword([]byte(pw), 12)
+	return
+}
+
+func (user *User) ComparePassword(pw string) error {
+	return bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(pw))
+}
+
+func (user *User) GenerateToken() (err error) {
+	token := jwt.New(jwt.GetSigningMethod("HS256"))
+	token.Claims["id"] = user.Id
+	token.Claims["email"] = user.Email
+	token.Claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+
+	user.Token, err = token.SignedString("secretkey")
+	return
 }
 
 type Tree interface {
@@ -33,7 +57,11 @@ type Item struct {
 }
 
 func (item *Item) GetChildrens(db *DB) error {
-	return db.C("comments").Find(bson.M{"item": item.Id, "parent": nil}).Sort("-date").All(&item.Comments)
+	err := db.C("comments").Find(bson.M{"item": item.Id, "parent": nil}).Sort("-date").All(&item.Comments)
+	if item.Comments == nil {
+		item.Comments = []*Comment{}
+	}
+	return err
 }
 
 func (item *Item) Childrens() []*Comment {
@@ -65,7 +93,11 @@ type Comment struct {
 }
 
 func (com *Comment) GetChildrens(db *DB) error {
-	return db.C("comments").Find(bson.M{"parent": com.Id}).Sort("-date").All(&com.Comments)
+	err := db.C("comments").Find(bson.M{"parent": com.Id}).Sort("-date").All(&com.Comments)
+	if com.Comments == nil {
+		com.Comments = []*Comment{}
+	}
+	return err
 }
 
 func (com *Comment) Childrens() []*Comment {

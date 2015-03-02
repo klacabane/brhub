@@ -1,11 +1,14 @@
 package db
 
 import (
+	"fmt"
 	"log"
 
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 )
+
+var ErrFailAuth = fmt.Errorf("auth failed")
 
 type Session struct {
 	S *mgo.Session
@@ -42,9 +45,27 @@ type DB struct {
 	*mgo.Database
 }
 
+func (db *DB) AuthWithToken(mail string, pw string) (*User, error) {
+	var user *User
+	err := db.C("users").Find(bson.M{"mail": mail}).One(&user)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, ErrFailAuth
+		}
+		return nil, err
+	}
+
+	if err = user.ComparePassword(pw); err != nil {
+		return nil, ErrFailAuth
+	}
+	err = user.GenerateToken()
+
+	return user, err
+}
+
 func (db *DB) Timeline(user bson.ObjectId, skip, limit int) ([]Item, error) {
 	items := make([]Item, limit)
-	err := db.C("items").Find(bson.M{}).Skip(skip).Limit(limit).Sort("-date").All(&items)
+	err := db.C("items").Find(nil).Skip(skip).Limit(limit).Sort("-date").All(&items)
 	return items, err
 }
 

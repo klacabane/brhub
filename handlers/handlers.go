@@ -12,6 +12,24 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
+func Auth(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+	session := appCtx.SessionClone()
+	defer session.Close()
+
+	status := 200
+	user, err := session.DB().AuthWithToken(
+		r.FormValue("email"),
+		r.FormValue("password"))
+	if err != nil {
+		if err == db.ErrFailAuth {
+			status = 401
+		} else {
+			status = 500
+		}
+	}
+	return status, user, err
+}
+
 func Timeline(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
 	var skip, limit int64
 	if limit, _ = strconv.ParseInt(c.URLParams["limit"], 10, 64); limit <= 0 || limit > 10 {

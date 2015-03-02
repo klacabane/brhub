@@ -72,6 +72,7 @@ func saveTree(c *Comment, depth int) error {
 		child := NewComment()
 		child.Parent = c.Id
 		child.Item = c.Item
+		child.Comments = []*Comment{}
 
 		err := db_test.AddComment(child)
 		if err != nil {
