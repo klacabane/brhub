@@ -11,11 +11,12 @@ import (
 )
 
 type User struct {
-	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	Name     string        `json:"name"`
-	Email    string        `json:"email"`
-	Password []byte        `json:"-"`
-	Token    string        `json:"token"`
+	Id       bson.ObjectId   `json:"id" bson:"_id,omitempty"`
+	Name     string          `json:"name"`
+	Email    string          `json:"email"`
+	Password []byte          `json:"-"`
+	Token    string          `json:"token"`
+	Stars    []bson.ObjectId `json:"-"`
 }
 
 func (user *User) SetPassword(pw string) (err error) {

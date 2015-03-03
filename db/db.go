@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"sort"
 
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
@@ -63,9 +64,35 @@ func (db *DB) AuthWithToken(mail string, pw string) (*User, error) {
 	return user, err
 }
 
-func (db *DB) Timeline(user bson.ObjectId, skip, limit int) ([]Item, error) {
-	items := make([]Item, limit)
-	err := db.C("items").Find(nil).Skip(skip).Limit(limit).Sort("-date").All(&items)
+func (db *DB) User(id bson.ObjectId) (*User, error) {
+	var user *User
+	err := db.C("users").FindId(id).One(&user)
+	return user, err
+}
+
+func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, error) {
+	user, err := db.User(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]*Item, limit)
+	err = db.C("items").Find(nil).Skip(skip).Limit(limit).Sort("-date").All(&items)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(user.Stars) > 0 {
+		for _, item := range items {
+			idstr := item.Id.String()
+			index := sort.Search(len(user.Stars), func(i int) bool {
+				return user.Stars[i].String() >= idstr
+			})
+
+			item.Starred = index < len(user.Stars) &&
+				user.Stars[index].String() == idstr
+		}
+	}
 	return items, err
 }
 
