@@ -15,17 +15,21 @@ func main() {
 
 	ctx := &handlers.Context{Session: session}
 
+	api := web.New()
+	api.Use(handlers.ValidateToken)
+	api.Get("/api/timeline/:skip/:limit", handlers.AppHandler{ctx, handlers.Timeline})
+
+	api.Post("/api/b/", handlers.AppHandler{ctx, handlers.CreateBrhub})
+	api.Get("/api/b/:id/:skip/:limit", handlers.AppHandler{ctx, handlers.Items})
+
+	api.Post("/api/items/", handlers.AppHandler{ctx, handlers.CreateItem})
+	api.Get("/api/items/:id", handlers.AppHandler{ctx, handlers.Item})
+	api.Patch("/api/items/:id/upvote", handlers.AppHandler{ctx, handlers.Upvote})
+	api.Patch("/api/items/:id/comments", handlers.AppHandler{ctx, handlers.CreateComment})
+
 	mux := web.New()
-	mux.Get("/api/timeline/:skip/:limit", handlers.AppHandler{ctx, handlers.Timeline})
-
-	mux.Post("/api/b", handlers.AppHandler{ctx, handlers.CreateBrhub})
-	mux.Get("/api/b/:id/:skip/:limit", handlers.AppHandler{ctx, handlers.Items})
-
-	mux.Post("/api/items", handlers.AppHandler{ctx, handlers.CreateItem})
-	mux.Get("/api/items/:id", handlers.AppHandler{ctx, handlers.Item})
-
-	mux.Post("/api/comments", handlers.AppHandler{ctx, handlers.CreateComment})
-
+	mux.Post("/auth", handlers.AppHandler{ctx, handlers.Auth})
+	mux.Handle("/api/*", api)
 	mux.Handle("/*", http.FileServer(http.Dir("./webapp")))
 
 	log.Println("Listening on port 8000")

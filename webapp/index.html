@@ -2,9 +2,22 @@
 <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script> 
 <script>
 $.ajax({
-  url: "http://localhost:8000/api/item/54ece05ad43c6c0bb6000001"
+  method: "POST",
+  url: "http://localhost:8000/auth",
+  data: {
+    name: "foo",
+    password: "bar"
+  }
 }).done(function(res) {
-  console.log(res)
+  var token = res.token
+  $.ajax({
+    headers: {
+      "X-token": token
+    },
+    url: "http://localhost:8000/api/timeline/0/5"
+  }).done(function(res) {
+    console.log(res)
+  })
 })
 </script>
 </html>

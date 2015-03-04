@@ -19,7 +19,7 @@ func (ctx *Context) SessionClone() *db.Session {
 
 type AppHandler struct {
 	AppCtx *Context
-	H      func(*Context, web.C, http.ResponseWriter, *http.Request) (int, interface{}, error)
+	H      func(*Context, web.C, *http.Request) (int, interface{}, error)
 }
 
 func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,7 @@ func (ah AppHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (ah AppHandler) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	status, data, err := ah.H(ah.AppCtx, c, w, r)
+	status, data, err := ah.H(ah.AppCtx, c, r)
 	if err != nil {
 		w.WriteHeader(status)
 		w.Write(errJson(err.Error()))

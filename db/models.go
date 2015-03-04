@@ -10,12 +10,17 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
+type Author struct {
+	Id   bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Name string        `json:"name"`
+}
+
 type User struct {
 	Id       bson.ObjectId   `json:"id" bson:"_id,omitempty"`
 	Name     string          `json:"name"`
 	Email    string          `json:"email"`
 	Password []byte          `json:"-"`
-	Token    string          `json:"token"`
+	Token    string          `json:"token" bson:"-"`
 	Stars    []bson.ObjectId `json:"-"`
 }
 
@@ -31,10 +36,10 @@ func (user *User) ComparePassword(pw string) error {
 func (user *User) GenerateToken() (err error) {
 	token := jwt.New(jwt.GetSigningMethod("HS256"))
 	token.Claims["id"] = user.Id
-	token.Claims["email"] = user.Email
+	token.Claims["name"] = user.Name
 	token.Claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
-	user.Token, err = token.SignedString("secretkey")
+	user.Token, err = token.SignedString([]byte("secretkey"))
 	return
 }
 
@@ -48,12 +53,11 @@ type Item struct {
 	Title        string        `json:"title"`
 	Content      string        `json:"content"`
 	Brhub        Brhub         `json:"brhub"`
-	Author       string        `json:"author"`
+	Author       Author        `json:"author"`
 	CommentCount int           `json:"commentCount"`
-	Comments     []*Comment    `json:"comments" bson:"-"`
+	Comments     []*Comment    `json:"comments,omitempty" bson:"-"`
 	Date         int64         `json:"date"`
-	Up           int           `json:"up"`
-	Down         int           `json:"down"`
+	Upvote       int           `json:"upvote"`
 	Starred      bool          `json:"starred"`
 }
 
@@ -83,7 +87,7 @@ type Brhub struct {
 
 type Comment struct {
 	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	Author   string        `json:"author"`
+	Author   Author        `json:"author"`
 	Content  string        `json:"content"`
 	Date     int64         `json:"date"`
 	Up       int           `json:"up"`

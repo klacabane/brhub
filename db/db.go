@@ -11,6 +11,8 @@ import (
 
 var ErrFailAuth = fmt.Errorf("auth failed")
 
+type Update map[string]interface{}
+
 type Session struct {
 	S *mgo.Session
 }
@@ -46,9 +48,9 @@ type DB struct {
 	*mgo.Database
 }
 
-func (db *DB) AuthWithToken(mail string, pw string) (*User, error) {
+func (db *DB) AuthWithToken(name string, pw string) (*User, error) {
 	var user *User
-	err := db.C("users").Find(bson.M{"mail": mail}).One(&user)
+	err := db.C("users").Find(bson.M{"name": name}).One(&user)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, ErrFailAuth
@@ -68,6 +70,30 @@ func (db *DB) User(id bson.ObjectId) (*User, error) {
 	var user *User
 	err := db.C("users").FindId(id).One(&user)
 	return user, err
+}
+
+func (db *DB) NewUser(name, password string) (*User, error) {
+	user := &User{Id: bson.NewObjectId(), Name: name}
+	err := user.SetPassword(password)
+	if err != nil {
+		return nil, err
+	}
+
+	err = user.GenerateToken()
+	if err != nil {
+		return nil, err
+	}
+	err = db.C("users").Insert(user)
+
+	return user, err
+}
+
+func (db *DB) Star(userId, itemId bson.ObjectId) error {
+	return db.C("users").UpdateId(userId, bson.M{"$addToSet": bson.M{"stars": itemId}})
+}
+
+func (db *DB) Unstar(userId, itemId bson.ObjectId) error {
+	return db.C("users").UpdateId(userId, bson.M{"$pull": bson.M{"stars": itemId}})
 }
 
 func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, error) {
@@ -168,6 +194,18 @@ func (db *DB) commentTree(parent Tree, c chan<- error) {
 		}
 	}
 	c <- err
+}
+
+func (db *DB) Upvote(itemId bson.ObjectId) (Update, error) {
+	var item Item
+	change := mgo.Change{
+		Update:    bson.M{"$inc": bson.M{"upvote": 1}},
+		Upsert:    false,
+		ReturnNew: true,
+	}
+	_, err := db.C("items").FindId(itemId).Apply(change, &item)
+
+	return Update{"upvote": item.Upvote}, err
 }
 
 func (db *DB) Comment(id bson.ObjectId) (Comment, error) {

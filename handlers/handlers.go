@@ -12,13 +12,13 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-func Auth(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func Auth(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	session := appCtx.SessionClone()
 	defer session.Close()
 
 	status := 200
 	user, err := session.DB().AuthWithToken(
-		r.FormValue("email"),
+		r.FormValue("name"),
 		r.FormValue("password"))
 	if err != nil {
 		if err == db.ErrFailAuth {
@@ -30,7 +30,7 @@ func Auth(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int
 	return status, user, err
 }
 
-func Timeline(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func Timeline(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	var skip, limit int64
 	if limit, _ = strconv.ParseInt(c.URLParams["limit"], 10, 64); limit <= 0 || limit > 10 {
 		limit = 10
@@ -43,14 +43,15 @@ func Timeline(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) 
 	defer session.Close()
 
 	status := 200
-	items, err := session.DB().Timeline(bson.NewObjectId() /*userid*/, int(skip), int(limit))
+	userId := c.Env["user"].(db.Author).Id
+	items, err := session.DB().Timeline(userId, int(skip), int(limit))
 	if err != nil {
 		status = 500
 	}
 	return status, items, err
 }
 
-func Items(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(c.URLParams["id"]) {
 		return 400, nil, fmt.Errorf("invalid id")
 	}
@@ -67,7 +68,7 @@ func Items(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (in
 	return status, items, err
 }
 
-func Item(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	id := c.URLParams["id"]
 	if etag := r.Header.Get("If-None-Match"); len(etag) > 0 {
 	}
@@ -92,7 +93,7 @@ func Item(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int
 	return status, item, err
 }
 
-func CreateItem(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(r.FormValue("brhub")) {
 		return 400, nil, fmt.Errorf("invalid brhub")
 	}
@@ -112,6 +113,7 @@ func CreateItem(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request
 	item.Title = r.FormValue("title")
 	item.Content = r.FormValue("content")
 	item.Brhub = brhub
+	item.Author = c.Env["user"].(db.Author)
 
 	status := 201
 	err = session.DB().AddItem(item)
@@ -121,7 +123,27 @@ func CreateItem(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request
 	return status, item, err
 }
 
-func CreateBrhub(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func Upvote(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	if !bson.IsObjectIdHex(c.URLParams["id"]) {
+		return 400, nil, fmt.Errorf("invalid item")
+	}
+
+	session := appCtx.SessionClone()
+	defer session.Close()
+
+	status := 200
+	dif, err := session.DB().Upvote(bson.ObjectIdHex(c.URLParams["id"]))
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			status = 404
+		} else {
+			status = 500
+		}
+	}
+	return status, dif, err
+}
+
+func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	session := appCtx.SessionClone()
 	defer session.Close()
 
@@ -145,7 +167,7 @@ func CreateBrhub(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Reques
 	return status, b, err
 }
 
-func CreateComment(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Request) (int, interface{}, error) {
+func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	var itemId, parentId bson.ObjectId
 	if !bson.IsObjectIdHex(r.FormValue("item")) {
 		return 400, nil, fmt.Errorf("invalid item")
@@ -185,6 +207,7 @@ func CreateComment(appCtx *Context, c web.C, w http.ResponseWriter, r *http.Requ
 	comment.Parent = parentId
 	comment.Item = itemId
 	comment.Content = r.FormValue("content")
+	comment.Author = c.Env["user"].(db.Author)
 
 	status := 201
 	err = session.DB().AddComment(comment)
