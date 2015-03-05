@@ -8,15 +8,51 @@ $.ajax({
     name: "foo",
     password: "bar"
   }
-}).done(function(res) {
-  var token = res.token
+}).done(function(user) {
+  var token = user.token
   $.ajax({
+    method: "POST",
+    url: "http://localhost:8000/api/b/",
     headers: {
       "X-token": token
     },
-    url: "http://localhost:8000/api/timeline/0/5"
-  }).done(function(res) {
-    console.log(res)
+    data: {
+      name: "swank"
+    }
+  }).done(function(brhub) {
+    $.ajax({
+      method: "POST",
+      url: "http://localhost:8000/api/items/",
+      headers: {
+        "X-token": token
+      },
+      data: {
+        title: "foo",
+        content: "bar",
+        brhub: brhub.id
+      }
+    }).done(function(item) {
+      $.ajax({
+        method: "PATCH",
+        url: "http://localhost:8000/api/users/stars/",
+        headers: {
+          "X-token": token
+        },
+        data: {
+          item: item.id
+        }
+      }).done(function(dif) {
+        $.ajax({
+          method: "GET",
+          url: "http://localhost:8000/api/timeline/0/5",
+          headers: {
+            "X-token": token
+          }
+        }).done(function(res) {
+          console.log(res)
+        })
+      })
+    })
   })
 })
 </script>

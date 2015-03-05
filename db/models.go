@@ -25,7 +25,7 @@ type User struct {
 }
 
 func (user *User) SetPassword(pw string) (err error) {
-	user.Password, err = bcrypt.GenerateFromPassword([]byte(pw), 12)
+	user.Password, err = bcrypt.GenerateFromPassword([]byte(pw), 8)
 	return
 }
 
@@ -75,8 +75,9 @@ func (item *Item) Childrens() []*Comment {
 
 func NewItem() *Item {
 	return &Item{
-		Id:   bson.NewObjectId(),
-		Date: time.Now().UnixNano(),
+		Id:       bson.NewObjectId(),
+		Date:     time.Now().UnixNano(),
+		Comments: []*Comment{},
 	}
 }
 
@@ -111,7 +112,8 @@ func (com *Comment) Childrens() []*Comment {
 
 func NewComment() *Comment {
 	return &Comment{
-		Id:   bson.NewObjectId(),
-		Date: time.Now().UnixNano(),
+		Id:       bson.NewObjectId(),
+		Date:     time.Now().UnixNano(),
+		Comments: []*Comment{},
 	}
 }

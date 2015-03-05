@@ -23,7 +23,7 @@ var (
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().UnixNano())
 
-	session := MainSession()
+	session := MainSession("localhost")
 	defer session.Close()
 
 	db_test = session.DB()
@@ -48,7 +48,6 @@ func TestAddComment(t *testing.T) {
 	for i := comnb - 1; i >= 0; i-- {
 		comments_test[i] = NewComment()
 		comments_test[i].Item = item_test.Id
-		comments_test[i].Comments = []*Comment{}
 		assert.Nil(t, db_test.AddComment(comments_test[i]))
 
 		assert.Nil(t, saveTree(comments_test[i], i))
@@ -72,7 +71,6 @@ func saveTree(c *Comment, depth int) error {
 		child := NewComment()
 		child.Parent = c.Id
 		child.Item = c.Item
-		child.Comments = []*Comment{}
 
 		err := db_test.AddComment(child)
 		if err != nil {

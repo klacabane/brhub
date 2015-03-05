@@ -53,7 +53,7 @@ func Timeline(appCtx *Context, c web.C, r *http.Request) (int, interface{}, erro
 
 func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(c.URLParams["id"]) {
-		return 400, nil, fmt.Errorf("invalid id")
+		return 422, nil, fmt.Errorf("invalid id")
 	}
 	brhubId := bson.ObjectIdHex(c.URLParams["id"])
 
@@ -74,7 +74,7 @@ func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	}
 
 	if !bson.IsObjectIdHex(id) {
-		return 400, nil, fmt.Errorf("invalid id")
+		return 422, nil, fmt.Errorf("invalid id")
 	}
 	itemId := bson.ObjectIdHex(id)
 
@@ -95,7 +95,7 @@ func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 
 func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(r.FormValue("brhub")) {
-		return 400, nil, fmt.Errorf("invalid brhub")
+		return 422, nil, fmt.Errorf("invalid brhub")
 	}
 
 	session := appCtx.SessionClone()
@@ -104,7 +104,7 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	brhub, err := session.DB().Brhub(bson.ObjectIdHex(r.FormValue("brhub")))
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 400, nil, fmt.Errorf("invalid brhub")
+			return 422, nil, fmt.Errorf("invalid brhub")
 		}
 		return 500, nil, err
 	}
@@ -125,7 +125,7 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 
 func Upvote(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(c.URLParams["id"]) {
-		return 400, nil, fmt.Errorf("invalid item")
+		return 422, nil, fmt.Errorf("invalid item")
 	}
 
 	session := appCtx.SessionClone()
@@ -143,6 +143,35 @@ func Upvote(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error)
 	return status, dif, err
 }
 
+func Star(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	if !bson.IsObjectIdHex(r.FormValue("item")) {
+		return 422, nil, fmt.Errorf("invalid item")
+	}
+
+	session := appCtx.SessionClone()
+	defer session.Close()
+
+	status := 200
+	itemId := bson.ObjectIdHex(r.FormValue("item"))
+
+	_, err := session.DB().Item(itemId)
+	if err != nil {
+		status = 500
+		if err == mgo.ErrNotFound {
+			status = 422
+		}
+		return status, nil, err
+	}
+
+	dif, err := session.DB().Star(
+		c.Env["user"].(db.Author).Id,
+		itemId)
+	if err != nil {
+		status = 500
+	}
+	return status, dif, err
+}
+
 func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	session := appCtx.SessionClone()
 	defer session.Close()
@@ -151,7 +180,7 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 	if exists, err := session.DB().BrhubExists(name); err != nil {
 		return 500, nil, err
 	} else if exists {
-		return 400, nil, fmt.Errorf("brhub %s already exists", name)
+		return 422, nil, fmt.Errorf("brhub %s already exists", name)
 	}
 
 	b := &db.Brhub{
@@ -170,15 +199,15 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	var itemId, parentId bson.ObjectId
 	if !bson.IsObjectIdHex(r.FormValue("item")) {
-		return 400, nil, fmt.Errorf("invalid item")
+		return 422, nil, fmt.Errorf("invalid item")
 	}
 	itemId = bson.ObjectIdHex(r.FormValue("item"))
 
-	if parentstr := r.FormValue("parent"); len(parentstr) > 0 {
-		if !bson.IsObjectIdHex(parentstr) {
-			return 400, nil, fmt.Errorf("invalid parent")
+	if parenthex := r.FormValue("parent"); len(parenthex) > 0 {
+		if !bson.IsObjectIdHex(parenthex) {
+			return 422, nil, fmt.Errorf("invalid parent")
 		}
-		parentId = bson.ObjectIdHex(parentstr)
+		parentId = bson.ObjectIdHex(parenthex)
 	}
 
 	session := appCtx.SessionClone()
@@ -188,7 +217,7 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 		_, err := session.DB().Comment(parentId)
 		if err != nil {
 			if err == mgo.ErrNotFound {
-				return 400, nil, fmt.Errorf("invalid parent")
+				return 422, nil, fmt.Errorf("invalid parent")
 			}
 			return 500, nil, fmt.Errorf(http.StatusText(500))
 		}
@@ -198,7 +227,7 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 	_, err := session.DB().Item(itemId)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 400, nil, fmt.Errorf("invalid item")
+			return 422, nil, fmt.Errorf("invalid item")
 		}
 		return 500, nil, fmt.Errorf(http.StatusText(500))
 	}
@@ -209,7 +238,7 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 	comment.Content = r.FormValue("content")
 	comment.Author = c.Env["user"].(db.Author)
 
-	status := 201
+	status := 200
 	err = session.DB().AddComment(comment)
 	if err != nil {
 		status = 500

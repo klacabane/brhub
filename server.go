@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	session := db.MainSession()
+	session := db.MainSession("localhost")
 
 	ctx := &handlers.Context{Session: session}
 
@@ -26,6 +26,8 @@ func main() {
 	api.Get("/api/items/:id", handlers.AppHandler{ctx, handlers.Item})
 	api.Patch("/api/items/:id/upvote", handlers.AppHandler{ctx, handlers.Upvote})
 	api.Patch("/api/items/:id/comments", handlers.AppHandler{ctx, handlers.CreateComment})
+
+	api.Patch("/api/users/stars/", handlers.AppHandler{ctx, handlers.Star})
 
 	mux := web.New()
 	mux.Post("/auth", handlers.AppHandler{ctx, handlers.Auth})

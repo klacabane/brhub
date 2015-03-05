@@ -17,8 +17,8 @@ type Session struct {
 	S *mgo.Session
 }
 
-func MainSession() *Session {
-	session, err := mgo.Dial("localhost")
+func MainSession(addr string) *Session {
+	session, err := mgo.Dial(addr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -88,12 +88,14 @@ func (db *DB) NewUser(name, password string) (*User, error) {
 	return user, err
 }
 
-func (db *DB) Star(userId, itemId bson.ObjectId) error {
-	return db.C("users").UpdateId(userId, bson.M{"$addToSet": bson.M{"stars": itemId}})
+func (db *DB) Star(userId, itemId bson.ObjectId) (Update, error) {
+	err := db.C("users").UpdateId(userId, bson.M{"$addToSet": bson.M{"stars": itemId}})
+	return Update{"starred": true}, err
 }
 
-func (db *DB) Unstar(userId, itemId bson.ObjectId) error {
-	return db.C("users").UpdateId(userId, bson.M{"$pull": bson.M{"stars": itemId}})
+func (db *DB) Unstar(userId, itemId bson.ObjectId) (Update, error) {
+	err := db.C("users").UpdateId(userId, bson.M{"$pull": bson.M{"stars": itemId}})
+	return Update{"starred": false}, err
 }
 
 func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, error) {
@@ -110,13 +112,12 @@ func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, error) {
 
 	if len(user.Stars) > 0 {
 		for _, item := range items {
-			idstr := item.Id.String()
 			index := sort.Search(len(user.Stars), func(i int) bool {
-				return user.Stars[i].String() >= idstr
+				return user.Stars[i] >= item.Id
 			})
 
 			item.Starred = index < len(user.Stars) &&
-				user.Stars[index].String() == idstr
+				user.Stars[index] == item.Id
 		}
 	}
 	return items, err
