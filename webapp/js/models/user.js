@@ -12,7 +12,5 @@ User.signin = function (name, pw) {
 };
 
 User.timeline = function () {
-  return function () {
     return Req({method: 'GET', ep: '/api/timeline/0/5'});
-  }
 }

@@ -17,6 +17,20 @@ type authp struct {
 	Name, Password string
 }
 
+type itemp struct {
+	Brhub          bson.ObjectId
+	Title, Content string
+}
+
+type commentp struct {
+	Item    bson.ObjectId
+	Content string
+	// marshal as string to avoid error when empty
+	Parent string
+
+	parent bson.ObjectId
+}
+
 func Auth(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	var params authp
 
@@ -105,14 +119,17 @@ func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 }
 
 func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	if !bson.IsObjectIdHex(r.FormValue("brhub")) {
+	var params itemp
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&params); err != nil {
 		return 422, nil, fmt.Errorf("invalid brhub")
 	}
 
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	brhub, err := session.DB().Brhub(bson.ObjectIdHex(r.FormValue("brhub")))
+	brhub, err := session.DB().Brhub(params.Brhub)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return 422, nil, fmt.Errorf("invalid brhub")
@@ -121,8 +138,8 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	}
 
 	item := db.NewItem()
-	item.Title = r.FormValue("title")
-	item.Content = r.FormValue("content")
+	item.Title = params.Title
+	item.Content = params.Content
 	item.Brhub = brhub
 	item.Author = c.Env["user"].(db.Author)
 
@@ -184,19 +201,25 @@ func Star(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 }
 
 func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	var params authp
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&params); err != nil {
+		return 400, nil, fmt.Errorf(http.StatusText(400))
+	}
+
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	name := r.FormValue("name")
-	if exists, err := session.DB().BrhubExists(name); err != nil {
+	if exists, err := session.DB().BrhubExists(params.Name); err != nil {
 		return 500, nil, err
 	} else if exists {
-		return 422, nil, fmt.Errorf("brhub %s already exists", name)
+		return 422, nil, fmt.Errorf("brhub %s already exists", params.Name)
 	}
 
 	b := &db.Brhub{
 		Id:   bson.NewObjectId(),
-		Name: name,
+		Name: params.Name,
 	}
 
 	status := 201
@@ -208,34 +231,32 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 }
 
 func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	var itemId, parentId bson.ObjectId
-	if !bson.IsObjectIdHex(r.FormValue("item")) {
-		return 422, nil, fmt.Errorf("invalid item")
-	}
-	itemId = bson.ObjectIdHex(r.FormValue("item"))
+	var params commentp
 
-	if parenthex := r.FormValue("parent"); len(parenthex) > 0 {
-		if !bson.IsObjectIdHex(parenthex) {
-			return 422, nil, fmt.Errorf("invalid parent")
-		}
-		parentId = bson.ObjectIdHex(parenthex)
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&params); err != nil {
+		return 422, nil, err
 	}
 
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	if len(parentId) > 0 {
-		_, err := session.DB().Comment(parentId)
+	if len(params.Parent) > 0 {
+		if !bson.IsObjectIdHex(params.Parent) {
+			return 422, nil, fmt.Errorf("invalid parent")
+		}
+		params.parent = bson.ObjectIdHex(params.Parent)
+
+		_, err := session.DB().Comment(params.parent)
 		if err != nil {
 			if err == mgo.ErrNotFound {
 				return 422, nil, fmt.Errorf("invalid parent")
 			}
 			return 500, nil, fmt.Errorf(http.StatusText(500))
 		}
-
 	}
 
-	_, err := session.DB().Item(itemId)
+	_, err := session.DB().Item(params.Item)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return 422, nil, fmt.Errorf("invalid item")
@@ -244,9 +265,9 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 	}
 
 	comment := db.NewComment()
-	comment.Parent = parentId
-	comment.Item = itemId
-	comment.Content = r.FormValue("content")
+	comment.Parent = params.parent
+	comment.Item = params.Item
+	comment.Content = params.Content
 	comment.Author = c.Env["user"].(db.Author)
 
 	status := 200

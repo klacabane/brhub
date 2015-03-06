@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"reflect"
 	"testing"
 
@@ -36,7 +35,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestFailAuth(t *testing.T) {
+func TestInvalidAuth(t *testing.T) {
 	params := authp{Name: "foo", Password: "baz"}
 	b, _ := json.Marshal(params)
 
@@ -51,7 +50,7 @@ func TestFailAuth(t *testing.T) {
 	assert.Nil(t, data)
 }
 
-func TestSuccessAuth(t *testing.T) {
+func TestValidAuth(t *testing.T) {
 	params := authp{Name: "foo", Password: "bar"}
 	b, _ := json.Marshal(params)
 
@@ -93,12 +92,13 @@ func TestTimeline(t *testing.T) {
 }
 
 func TestCreateBrhub(t *testing.T) {
-	req, err := http.NewRequest("POST", "/api/b/", nil)
+	params := authp{Name: "test_brhub"}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/api/b/", bytes.NewBuffer(b))
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Form = url.Values{}
-	req.Form.Add("name", "test_brhub")
 
 	code, data, err := CreateBrhub(ctx, web.C{}, req)
 	assert.Nil(t, err)
@@ -108,15 +108,16 @@ func TestCreateBrhub(t *testing.T) {
 	assert.Equal(t, "test_brhub", brhub_test.Name)
 }
 
-func TestCreateItem(t *testing.T) {
-	req, err := http.NewRequest("POST", "/api/items/", nil)
+func TestInvalidCreateItem(t *testing.T) {
+	params := struct {
+		Brhub, Title, Content string
+	}{"foo", "foobar", "lorem ipsum"}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/api/items/", bytes.NewBuffer(b))
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Form = url.Values{}
-	req.Form.Add("brhub", "foo")
-	req.Form.Add("title", "foobar")
-	req.Form.Add("content", "lorem ipsum")
 
 	c := web.C{
 		Env: map[string]interface{}{
@@ -129,9 +130,26 @@ func TestCreateItem(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "invalid brhub", err.Error())
 	assert.Nil(t, data)
+}
 
-	req.Form.Set("brhub", brhub_test.Id.Hex())
-	code, data, err = CreateItem(ctx, c, req)
+func TestValidCreateItem(t *testing.T) {
+	params := struct {
+		Brhub, Title, Content string
+	}{brhub_test.Id.Hex(), "foobar", "lorem ipsum"}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/api/items/", bytes.NewBuffer(b))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := web.C{
+		Env: map[string]interface{}{
+			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
+		},
+	}
+
+	code, data, err := CreateItem(ctx, c, req)
 	assert.Equal(t, 201, code)
 	assert.Nil(t, err)
 
@@ -140,14 +158,16 @@ func TestCreateItem(t *testing.T) {
 	assert.Equal(t, []*db.Comment{}, item_test.Comments)
 }
 
-func TestCreateComment(t *testing.T) {
-	req, err := http.NewRequest("POST", "/api/items/:id/comments", nil)
+func TestInvalidCreateComment(t *testing.T) {
+	params := struct {
+		Item, Content, Parent string
+	}{"foo", "bar", ""}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/api/items/:id/comments", bytes.NewBuffer(b))
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Form = url.Values{}
-	req.Form.Add("item", brhub_test.Id.Hex())
-	req.Form.Add("content", "lorem ipsum")
 
 	c := web.C{
 		Env: map[string]interface{}{
@@ -158,22 +178,58 @@ func TestCreateComment(t *testing.T) {
 	code, data, err := CreateComment(ctx, c, req)
 	assert.Equal(t, 422, code)
 	assert.NotNil(t, err)
+	assert.Nil(t, data)
+}
 
-	req.Form.Set("item", item_test.Id.Hex())
-	code, data, err = CreateComment(ctx, c, req)
+func TestValidCreateComment(t *testing.T) {
+	params := struct {
+		Item, Content, Parent string
+	}{item_test.Id.Hex(), "lorem ipsum", ""}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/api/comments/", bytes.NewBuffer(b))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := web.C{
+		Env: map[string]interface{}{
+			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
+		},
+	}
+
+	code, data, err := CreateComment(ctx, c, req)
 	assert.Equal(t, 200, code)
 	assert.Nil(t, err)
 
 	comment := data.(*db.Comment)
 	assert.Equal(t, "lorem ipsum", comment.Content)
 	item_test.Comments = append(item_test.Comments, comment)
+}
 
-	req.Form.Add("parent", comment.Id.Hex())
-	code, data, err = CreateComment(ctx, c, req)
+func TestCreateCommentWithParent(t *testing.T) {
+	params := struct {
+		Item, Content, Parent string
+	}{item_test.Id.Hex(), "lorem ipsum", item_test.Comments[0].Id.Hex()}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/api/comments/", bytes.NewBuffer(b))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := web.C{
+		Env: map[string]interface{}{
+			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
+		},
+	}
+
+	code, data, err := CreateComment(ctx, c, req)
 	assert.Equal(t, 200, code)
 	assert.Nil(t, err)
 
-	comment.Comments = append(comment.Comments, data.(*db.Comment))
+	item_test.Comments[0].Comments = append(
+		item_test.Comments[0].Comments, data.(*db.Comment))
 }
 
 func TestItem(t *testing.T) {
