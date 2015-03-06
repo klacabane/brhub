@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/url"
@@ -34,22 +36,31 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestAuth(t *testing.T) {
-	req, err := http.NewRequest("POST", "/auth", nil)
+func TestFailAuth(t *testing.T) {
+	params := authp{Name: "foo", Password: "baz"}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/auth", bytes.NewBuffer(b))
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Form = url.Values{}
-	req.Form.Add("name", "foo")
-	req.Form.Add("password", "baz")
 
 	code, data, err := Auth(ctx, web.C{}, req)
 	assert.Equal(t, err, db.ErrFailAuth)
 	assert.Equal(t, 401, code)
 	assert.Nil(t, data)
+}
 
-	req.Form.Set("password", "bar")
-	code, data, err = Auth(ctx, web.C{}, req)
+func TestSuccessAuth(t *testing.T) {
+	params := authp{Name: "foo", Password: "bar"}
+	b, _ := json.Marshal(params)
+
+	req, err := http.NewRequest("POST", "/auth", bytes.NewBuffer(b))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	code, data, err := Auth(ctx, web.C{}, req)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, code)
 	assert.NotNil(t, data)

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,14 +13,24 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
+type authp struct {
+	Name, Password string
+}
+
 func Auth(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	var params authp
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&params); err != nil {
+		return 400, nil, fmt.Errorf(http.StatusText(400))
+	}
+
 	session := appCtx.SessionClone()
 	defer session.Close()
 
 	status := 200
 	user, err := session.DB().AuthWithToken(
-		r.FormValue("name"),
-		r.FormValue("password"))
+		params.Name, params.Password)
 	if err != nil {
 		if err == db.ErrFailAuth {
 			status = 401
