@@ -1,6 +1,6 @@
 var storage = {
   lsKey: 'brhub-user',
-  getUser: function () {
+  getUser: function() {
     var data = localStorage.getItem(this.lsKey);
     var user = null;
     if (data === null) {

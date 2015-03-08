@@ -9,7 +9,10 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
-var ErrFailAuth = fmt.Errorf("auth failed")
+var (
+	ErrFailAuth     = fmt.Errorf("auth failed")
+	ErrUserNotFound = fmt.Errorf("user not found")
+)
 
 type Update map[string]interface{}
 
@@ -98,16 +101,19 @@ func (db *DB) Unstar(userId, itemId bson.ObjectId) (Update, error) {
 	return Update{"starred": false}, err
 }
 
-func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, error) {
+func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, bool, error) {
 	user, err := db.User(userId)
 	if err != nil {
-		return nil, err
+		if err == mgo.ErrNotFound {
+			return nil, false, ErrUserNotFound
+		}
+		return nil, false, err
 	}
 
-	items := make([]*Item, limit)
-	err = db.C("items").Find(nil).Skip(skip).Limit(limit).Sort("-date").All(&items)
+	items := make([]*Item, 0)
+	err = db.C("items").Find(nil).Skip(skip).Limit(limit + 1).Sort("-date").All(&items)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if len(user.Stars) > 0 {
@@ -120,11 +126,23 @@ func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, error) {
 				user.Stars[index] == item.Id
 		}
 	}
-	return items, err
+
+	var hasmore bool
+	if len(items) > limit {
+		items = items[:limit]
+		hasmore = true
+	}
+	return items, hasmore, err
 }
 
 func (db *DB) AddBrhub(b *Brhub) error {
 	return db.C("brhubs").Insert(b)
+}
+
+func (db *DB) AllBrhubs() ([]Brhub, error) {
+	var all []Brhub
+	err := db.C("brhubs").Find(nil).All(&all)
+	return all, err
 }
 
 func (db *DB) Brhub(id bson.ObjectId) (Brhub, error) {
@@ -142,10 +160,23 @@ func (db *DB) BrhubExists(name string) (bool, error) {
 	return true, err
 }
 
-func (db *DB) Items(brhubId bson.ObjectId) ([]Item, error) {
-	items := make([]Item, 0)
-	err := db.C("items").Find(bson.M{"brhub._id": brhubId}).Sort("-date").All(&items)
-	return items, err
+func (db *DB) Items(brhubId bson.ObjectId, skip, limit int) ([]*Item, bool, error) {
+	items := make([]*Item, 0)
+	err := db.C("items").
+		Find(bson.M{"brhub._id": brhubId}).
+		Skip(skip).Limit(limit + 1).
+		Sort("-date").
+		All(&items)
+	if err != nil {
+		return nil, false, err
+	}
+
+	var hasmore bool
+	if len(items) > limit {
+		items = items[:limit]
+		hasmore = true
+	}
+	return items, hasmore, nil
 }
 
 func (db *DB) AddItem(item *Item) error {

@@ -25,9 +25,10 @@ func main() {
 	api.Post("/api/items/", handlers.AppHandler{ctx, handlers.CreateItem})
 	api.Get("/api/items/:id", handlers.AppHandler{ctx, handlers.Item})
 	api.Patch("/api/items/:id/upvote", handlers.AppHandler{ctx, handlers.Upvote})
-	api.Patch("/api/items/:id/comments", handlers.AppHandler{ctx, handlers.CreateComment})
 
-	api.Patch("/api/users/stars/", handlers.AppHandler{ctx, handlers.Star})
+	api.Post("/api/comments/", handlers.AppHandler{ctx, handlers.CreateComment})
+
+	api.Patch("/api/users/stars", handlers.AppHandler{ctx, handlers.Star})
 
 	mux := web.New()
 	mux.Post("/auth", handlers.AppHandler{ctx, handlers.Auth})

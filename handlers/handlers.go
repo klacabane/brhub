@@ -31,6 +31,11 @@ type commentp struct {
 	parent bson.ObjectId
 }
 
+type page struct {
+	Hasmore bool       `json:"hasmore"`
+	Items   []*db.Item `json:"items"`
+}
+
 func Auth(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	var params authp
 
@@ -67,13 +72,16 @@ func Timeline(appCtx *Context, c web.C, r *http.Request) (int, interface{}, erro
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	status := 200
 	userId := c.Env["user"].(db.Author).Id
-	items, err := session.DB().Timeline(userId, int(skip), int(limit))
+	items, hasmore, err := session.DB().Timeline(userId, int(skip), int(limit))
 	if err != nil {
-		status = 500
+		status := 500
+		if err == db.ErrUserNotFound {
+			status = 403
+		}
+		return status, nil, err
 	}
-	return status, items, err
+	return 200, page{hasmore, items}, nil
 }
 
 func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
@@ -82,15 +90,22 @@ func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) 
 	}
 	brhubId := bson.ObjectIdHex(c.URLParams["id"])
 
+	var skip, limit int64
+	if limit, _ = strconv.ParseInt(c.URLParams["limit"], 10, 64); limit <= 0 || limit > 10 {
+		limit = 10
+	}
+	if skip, _ = strconv.ParseInt(c.URLParams["skip"], 10, 64); skip < 0 {
+		skip = 0
+	}
+
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	status := 200
-	items, err := session.DB().Items(brhubId)
+	items, hasmore, err := session.DB().Items(brhubId, int(skip), int(limit))
 	if err != nil {
-		status = 500
+		return 500, nil, err
 	}
-	return status, items, err
+	return 200, page{hasmore, items}, nil
 }
 
 func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
@@ -198,6 +213,17 @@ func Star(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 		status = 500
 	}
 	return status, dif, err
+}
+func AllBrhubs(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	session := appCtx.SessionClone()
+	defer session.Close()
+
+	status := 200
+	all, err := session.DB().AllBrhubs()
+	if err != nil {
+		status = 500
+	}
+	return status, all, err
 }
 
 func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {

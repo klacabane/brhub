@@ -1,9 +1,9 @@
 var app = app || {};
 
-(function (module) {
+(function(module) {
   'use strict';
 
-  module.view = function (ctrl) {
+  module.view = function(ctrl) {
     return m("div", [
       m("div", [
         m("input[name='username'][placeholder='Name'][type='text']", {
@@ -16,4 +16,4 @@ var app = app || {};
       ])
     ]);
   }
-})(app.home = app.home || {});
+})(app.auth = app.auth || {});
