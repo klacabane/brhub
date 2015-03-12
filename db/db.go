@@ -26,12 +26,15 @@ func MainSession(addr string) *Session {
 		log.Fatal(err)
 	}
 
-	if err = session.DB("brhub").C("items").EnsureIndexKey("-date"); err != nil {
-		log.Fatal(err)
+	ensureIndex := func(col string, key ...string) {
+		if err = session.DB("brhub").C(col).EnsureIndexKey(key...); err != nil {
+			log.Fatal(err)
+		}
 	}
-	if err = session.DB("brhub").C("comments").EnsureIndexKey("-date", "parent", "item"); err != nil {
-		log.Fatal(err)
-	}
+
+	ensureIndex("brhubs", "name")
+	ensureIndex("items", "-date")
+	ensureIndex("comments", "-date", "parent", "item")
 	return &Session{S: session}
 }
 
@@ -145,9 +148,9 @@ func (db *DB) AllBrhubs() ([]Brhub, error) {
 	return all, err
 }
 
-func (db *DB) Brhub(id bson.ObjectId) (Brhub, error) {
+func (db *DB) Brhub(name string) (Brhub, error) {
 	var b Brhub
-	err := db.C("brhubs").Find(bson.M{"_id": id}).One(&b)
+	err := db.C("brhubs").Find(bson.M{"name": name}).One(&b)
 	return b, err
 }
 
@@ -160,10 +163,10 @@ func (db *DB) BrhubExists(name string) (bool, error) {
 	return true, err
 }
 
-func (db *DB) Items(brhubId bson.ObjectId, skip, limit int) ([]*Item, bool, error) {
+func (db *DB) Items(brhubName string, skip, limit int) ([]*Item, bool, error) {
 	items := make([]*Item, 0)
 	err := db.C("items").
-		Find(bson.M{"brhub._id": brhubId}).
+		Find(bson.M{"brhub": brhubName}).
 		Skip(skip).Limit(limit + 1).
 		Sort("-date").
 		All(&items)

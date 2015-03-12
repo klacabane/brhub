@@ -5,9 +5,10 @@
     processError: function(err) {
       console.log(err)
       switch (err.status) {
+        case 401:
         case 403:
           storage.setUser(null);
-          m.route('/');
+          m.route('/auth');
           break;
         case 500:
       }
@@ -16,7 +17,10 @@
 
   m.route.mode = 'hash';
   m.route(document.body, '/', {
-    '/': app.auth,
-    '/timeline': app.timeline
+    '/auth': app.auth,
+    '/': app.feed('timeline'),
+    '/b/:name': app.feed(),
+    '/items/:id': app.items,
+    '/submit': app.submit
   });
 })(app = app || {});

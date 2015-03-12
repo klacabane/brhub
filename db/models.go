@@ -48,17 +48,25 @@ type Tree interface {
 	Childrens() []*Comment
 }
 
+const (
+	TYPE_TEXT = "text"
+	TYPE_LINK = "link"
+)
+
 type Item struct {
 	Id           bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Title        string        `json:"title"`
-	Content      string        `json:"content"`
-	Brhub        Brhub         `json:"brhub"`
+	Content      string        `json:"content,omitempty"`
+	Url          string        `json:"url,omitempty"`
+	Brhub        string        `json:"brhub"`
 	Author       Author        `json:"author"`
 	CommentCount int           `json:"commentCount"`
-	Comments     []*Comment    `json:"comments,omitempty" bson:"-"`
+	Comments     []*Comment    `json:"comments" bson:"-"`
 	Date         int64         `json:"date"`
 	Upvote       int           `json:"upvote"`
-	Starred      bool          `json:"starred"`
+	Starred      bool          `json:"starred" bson:"-"`
+	Type         string        `json:"type"`
+	Link         string        `json:"link" bson:"omitempty"`
 }
 
 func (item *Item) GetChildrens(db *DB) error {
@@ -95,7 +103,7 @@ type Comment struct {
 	Down     int           `json:"down"`
 	Parent   bson.ObjectId `json:"parent" bson:",omitempty"`
 	Comments []*Comment    `json:"comments" bson:"-"`
-	Item     bson.ObjectId `json:"-"`
+	Item     bson.ObjectId `json:"item"`
 }
 
 func (com *Comment) GetChildrens(db *DB) error {

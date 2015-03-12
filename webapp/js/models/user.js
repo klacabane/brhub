@@ -11,28 +11,41 @@ User.signin = function(name, pw) {
   }, true);
 };
 
-User.newB = function() {
+var Item = {};
+
+Item.get = function(id) {
   return Req({
-    method: 'POST',
-    ep: '/api/b/',
-    data: {
-      name: 'f'
-    }
+    method: 'GET',
+    ep: '/api/items/' + id
   });
 };
 
-User.newItem = function(b) {
+Item.create = function(data) {
   return Req({
     method: 'POST',
     ep: '/api/items/',
-    data: {
-      content: 'axaxa',
-      brhub: "54faf021d43c6c040b000001"
-    }
+    data: data
+  });
+};
+
+var Comments = {};
+Comments.create = function(data) {
+  console.log(data)
+  return Req({
+    method: 'POST',
+    ep: '/api/comments/',
+    data: data
   });
 }
 
 var Brhub = {};
+
+Brhub.all = function() {
+  return Req({
+    method: 'GET',
+    ep: '/api/b/'
+  });
+};
 
 Brhub.items = function(ep, start, n) {
   ep = ep === 'timeline' 
@@ -44,4 +57,16 @@ Brhub.items = function(ep, start, n) {
     method: 'GET',
     ep: '/api/' + ep
   });
-}
+};
+
+Brhub.create = function() {
+  return Req({
+    method: 'POST',
+    ep: '/api/b/',
+    data: {
+      name: 'f'
+    }
+  });
+};
+
+

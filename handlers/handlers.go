@@ -18,8 +18,7 @@ type authp struct {
 }
 
 type itemp struct {
-	Brhub          bson.ObjectId
-	Title, Content string
+	Brhub, Title, Content, Type, Link string
 }
 
 type commentp struct {
@@ -85,11 +84,6 @@ func Timeline(appCtx *Context, c web.C, r *http.Request) (int, interface{}, erro
 }
 
 func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	if !bson.IsObjectIdHex(c.URLParams["id"]) {
-		return 422, nil, fmt.Errorf("invalid id")
-	}
-	brhubId := bson.ObjectIdHex(c.URLParams["id"])
-
 	var skip, limit int64
 	if limit, _ = strconv.ParseInt(c.URLParams["limit"], 10, 64); limit <= 0 || limit > 10 {
 		limit = 10
@@ -101,7 +95,15 @@ func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) 
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	items, hasmore, err := session.DB().Items(brhubId, int(skip), int(limit))
+	_, err := session.DB().Brhub(c.URLParams["name"])
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return 422, nil, fmt.Errorf("invalid brhub")
+		}
+		return 500, nil, fmt.Errorf(http.StatusText(500))
+	}
+
+	items, hasmore, err := session.DB().Items(c.URLParams["name"], int(skip), int(limit))
 	if err != nil {
 		return 500, nil, err
 	}
@@ -138,13 +140,17 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&params); err != nil {
-		return 422, nil, fmt.Errorf("invalid brhub")
+		return 500, nil, fmt.Errorf(http.StatusText(500))
+	}
+
+	if params.Type != db.TYPE_TEXT && params.Type != db.TYPE_LINK {
+		return 422, nil, fmt.Errorf("invalid type")
 	}
 
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	brhub, err := session.DB().Brhub(params.Brhub)
+	_, err := session.DB().Brhub(params.Brhub)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return 422, nil, fmt.Errorf("invalid brhub")
@@ -155,7 +161,10 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	item := db.NewItem()
 	item.Title = params.Title
 	item.Content = params.Content
-	item.Brhub = brhub
+	item.Brhub = params.Brhub
+	item.Type = params.Type
+	// validate link
+	item.Link = params.Link
 	item.Author = c.Env["user"].(db.Author)
 
 	status := 201
