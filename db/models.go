@@ -56,17 +56,16 @@ const (
 type Item struct {
 	Id           bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Title        string        `json:"title"`
-	Content      string        `json:"content,omitempty"`
-	Url          string        `json:"url,omitempty"`
+	Link         string        `json:"link,omitempty" bson:"link,omitempty"`
+	Content      string        `json:"content,omitempty" bson:"content,omitempty"`
 	Brhub        string        `json:"brhub"`
 	Author       Author        `json:"author"`
-	CommentCount int           `json:"commentCount"`
 	Comments     []*Comment    `json:"comments" bson:"-"`
+	CommentCount int           `json:"commentCount" bson:"commentCount"`
 	Date         int64         `json:"date"`
 	Upvote       int           `json:"upvote"`
 	Starred      bool          `json:"starred" bson:"-"`
 	Type         string        `json:"type"`
-	Link         string        `json:"link" bson:"omitempty"`
 }
 
 func (item *Item) GetChildrens(db *DB) error {

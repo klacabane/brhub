@@ -309,6 +309,12 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 	err = session.DB().AddComment(comment)
 	if err != nil {
 		status = 500
+	} else {
+		err = session.DB().IncrCommentCount(params.Item)
+		if err != nil {
+			status = 500
+		}
 	}
+
 	return status, comment, err
 }

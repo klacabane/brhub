@@ -198,6 +198,11 @@ func (db *DB) Item(id bson.ObjectId) (*Item, error) {
 	return item, err
 }
 
+func (db *DB) IncrCommentCount(id bson.ObjectId) error {
+	return db.C("items").UpdateId(id,
+		bson.M{"$inc": bson.M{"commentCount": 1}})
+}
+
 func (db *DB) buildCommentTree(item *Item) error {
 	errchan := make(chan error, 1)
 	go db.commentTree(item, errchan)

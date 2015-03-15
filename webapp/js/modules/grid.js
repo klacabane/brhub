@@ -27,7 +27,7 @@ var app = app || {};
     getNextItems: function() {
       this.current += this.limit;
       this.getItems();
-    }
+    },
   };
 
   module.controller = function(opts) {
@@ -43,29 +43,34 @@ var app = app || {};
         return m("div", [
           m('p',[
             m('a', {
-              href: item.type === 'link' ? item.link : '/items/' + item.id
+              href: item.type === 'link' ? item.link : '/#/items/'+item.id,
             }, item.title)
           ]),
           m('p', [
-            m('span', 'by ' + item.author.name),
+            m('span', 'by '+item.author.name),
             m('span', {
               onclick: function(e) {
-                m.route('/b/' + item.brhub)
+                m.route('/b/'+item.brhub);
               },
-              style: {display: module.vm.src === 'timeline' ? 'inline' : 'none'}
+              style: {display: module.vm.src === 'timeline' ? 'inline' : 'none'},
             }, item.brhub)
+          ]),
+          m('p', [
+            m('a', {
+              href: '/#/items/'+item.id,
+            }, item.commentCount === 1 ? item.commentCount + ' comment' : item.commentCount + ' comments')
           ])
         ]) 
       }),
       m('button', {
         onclick: module.vm.getPrevItems.bind(module.vm), 
         style: {
-          display: module.vm.showPrev ? 'block' : 'none'
+          display: module.vm.showPrev ? 'inline' : 'none'
         }}, 'Prev'),
       m('button', {
         onclick: module.vm.getNextItems.bind(module.vm), 
         style: {
-          display: module.vm.showNext ? 'block' : 'none'
+          display: module.vm.showNext ? 'inline' : 'none'
         }}, 'Next')
     ]);
   }
