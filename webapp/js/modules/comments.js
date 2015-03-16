@@ -2,27 +2,43 @@ var app = app || {};
 
 var comments = function(parent, root) {
   var module = {};
+  var isItem = parent.hasOwnProperty('brhub');
   module.vm = {
-    reply: new reply({parent: parent.id, item: parent.item}),
-    parent: parent,
-    margin: root ? 0 : 40,
-    childs: parent.comments.map(function(child) {
-      return new comments(child);
-    })
+    margin: (isItem || root) ? 0 : 40,
+    init: function() {
+      var opts;
+      if (isItem) {
+        opts = {item: parent.id};
+      } else {
+        opts = {parent: parent.id, item: parent.item};
+      }
+
+      this.reply = new reply(opts);
+      this.childModules = parent.comments.map(function(child) {
+        return new comments(child, isItem);
+      });
+    }
   };
 
   module.view = function() {
-    return m('div', {style: {marginLeft: module.vm.margin+'px'}}, [
-      m('p', module.vm.parent.content),
+    var childs = [];
+    if (!isItem)
+      childs.push(m('p', parent.content));
+ 
+    childs.push(
       m('ul', [
         m('li', 'Reply')
       ]),
       module.vm.reply.view(),
-      m('div', module.vm.childs.map(function(sub) {
+      m('div', module.vm.childModules.map(function(sub) {
         return sub.view();
       }))
-    ]);
+    );
+
+    return m('div', {style: {marginLeft: module.vm.margin+'px'}}, childs);
   };
+
+  module.vm.init();
   return module;
 };
 
@@ -36,10 +52,11 @@ var reply = function(opts) {
       e.preventDefault();
 
       Comments.create({
-        item: this.item,
-        parent: this.parent,
-        content: this.content()
+        item: module.vm.item,
+        parent: module.vm.parent,
+        content: module.vm.content()
       }).then(function(comment) {
+        module.vm.content('');
         console.log(comment);
       }, app.utils.processError);
     }
@@ -48,10 +65,11 @@ var reply = function(opts) {
   module.view = function() {
     return m('form', [
       m('textarea[name="content"]', {
-        onchange: m.withAttr('value', module.vm.content)
+        onchange: m.withAttr('value', module.vm.content),
+        value: module.vm.content(),
       }),
       m('input[type="submit"][value="reply"]', {
-        onclick: module.vm.send.bind(module.vm)
+        onclick: module.vm.send,
       })
     ]);
   };

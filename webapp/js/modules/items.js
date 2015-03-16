@@ -10,14 +10,11 @@ var app = app || {};
     if (!/^[0-9a-fA-F]{24}$/.test(id)) return m.route('/timeline');
 
     this.item = m.prop({});
-    this.commentModules = [];
-    this.reply = new reply({item: id});
+    this.commentModule;
 
     Item.get(id).
       then(function(item) {
-        this.commentModules = item.comments.map(function(c) {
-          return new comments(c, true);
-        });
+        this.commentModule = new comments(item);
         this.item(item);
       }.bind(this), app.utils.processError);
   }
@@ -26,10 +23,7 @@ var app = app || {};
     return m('div', [
       m('h2', ctrl.item().title),
       m('p', ctrl.item().content),
-      ctrl.reply.view(),
-      m('div', ctrl.commentModules.map(function(mod) {
-        return mod.view();
-      }))
+      ctrl.commentModule.view(),
     ]);
   }
  })(app.items = {});
