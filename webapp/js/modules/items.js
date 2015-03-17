@@ -14,7 +14,7 @@ var app = app || {};
 
     Item.get(id).
       then(function(item) {
-        this.commentModule = new comments(item);
+        this.commentModule = new commentModule(item);
         this.item(item);
       }.bind(this), app.utils.processError);
   }

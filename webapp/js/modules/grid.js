@@ -44,7 +44,14 @@ var app = app || {};
           m('p',[
             m('a', {
               href: item.type === 'link' ? item.link : '/#/items/'+item.id,
-            }, item.title)
+            }, [
+              m('img', {
+                src: '',
+                width: 50,
+                height: 50,
+              }),
+              m('p', item.title)
+            ])
           ]),
           m('p', [
             m('span', 'by '+item.author.name),
