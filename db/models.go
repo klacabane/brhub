@@ -1,6 +1,8 @@
 package db
 
 import (
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -9,6 +11,8 @@ import (
 
 	"labix.org/v2/mgo/bson"
 )
+
+var tagExp = regexp.MustCompile("(\\[[a-zA-Z0-9-\\s]+\\])")
 
 type Author struct {
 	Id   bson.ObjectId `json:"id" bson:"_id,omitempty"`
@@ -58,7 +62,8 @@ type Item struct {
 	Title        string        `json:"title"`
 	Link         string        `json:"link,omitempty" bson:"link,omitempty"`
 	Content      string        `json:"content,omitempty" bson:"content,omitempty"`
-	Brhub        string        `json:"brhub"`
+	Tags         []string      `json:"tags"`
+	Brhub        Brhub         `json:"brhub"`
 	Author       Author        `json:"author"`
 	Comments     []*Comment    `json:"comments" bson:"-"`
 	CommentCount int           `json:"commentCount" bson:"commentCount"`
@@ -80,6 +85,16 @@ func (item *Item) Childrens() []*Comment {
 	return item.Comments
 }
 
+func (item *Item) SetTitleAndTags(s string) {
+	item.Tags = tagExp.FindAllString(s, -1)
+
+	for i, raw := range item.Tags {
+		s = strings.Replace(s, raw, "", 1)
+		item.Tags[i] = strings.TrimSpace(raw[1 : len(raw)-1])
+	}
+	item.Title = s
+}
+
 func NewItem() *Item {
 	return &Item{
 		Id:       bson.NewObjectId(),
@@ -89,8 +104,9 @@ func NewItem() *Item {
 }
 
 type Brhub struct {
-	Id   bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	Name string        `json:"name"`
+	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	Name     string        `json:"name"`
+	ColorHex string        `json:"color"`
 }
 
 type Comment struct {

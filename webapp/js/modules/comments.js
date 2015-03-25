@@ -18,6 +18,7 @@ var commentModule = function(parent, root) {
       }).then(function(comment) {
         module.vm.childModules.splice(0, 0, new commentModule(comment, isItem));
         module.vm.reply('');
+        module.vm.showForm(false);
       }, app.utils.processError);
     },
     childModules: parent.comments.map(function(child) {
@@ -29,9 +30,10 @@ var commentModule = function(parent, root) {
     var childs = [];
     if (!isItem)
       childs.push(
-        m('p', parent.content),
-        m('ul', [
-          m('li', {
+        m('a', {href: ''}, parent.author.name),
+        m('p[class="comment-content"]', parent.content),
+        m('div', [
+          m('small[class="btn-link"][style="cursor: pointer;"]', {
             onclick: function() {
               module.vm.showForm(!module.vm.showForm());
             }
@@ -41,20 +43,22 @@ var commentModule = function(parent, root) {
  
     childs.push(
       m('form', {style: {display: module.vm.showForm() ? 'block' : 'none'}}, [
-        m('textarea[name="content"]', {
-          onchange: m.withAttr('value', module.vm.reply),
-          value: module.vm.reply(),
-        }),
-        m('input[type="submit"][value="reply"]', {
-          onclick: module.vm.sendReply,
-        })
+        m('div[class="form-group"]', [
+          m('textarea[style="width: 200px; margin-bottom: 2px;"][class="form-control"][name="content"]', {
+            onchange: m.withAttr('value', module.vm.reply),
+            value: module.vm.reply()
+          }),
+          m('button[type="submit"][class="btn btn-default btn-xs"]', {
+            onclick: module.vm.sendReply
+          }, 'Reply')
+        ])
       ]),
       m('div', module.vm.childModules.map(function(sub) {
         return sub.view();
       }))
     );
 
-    return m('div', {style: {marginLeft: module.vm.margin+'px'}}, childs);
+    return m('div[class="comment"]', {style: {marginLeft: module.vm.margin+'px'}}, childs);
   };
 
   return module;

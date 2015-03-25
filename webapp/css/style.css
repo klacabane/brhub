@@ -1,0 +1,46 @@
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.content {
+  width: 50%;
+  margin: auto;
+  padding-top: 30px;
+}
+
+.form-inline > * {
+  margin-right: 5px;
+}
+
+.item-image {
+  float: left;
+  margin-right: 10px;
+}
+
+.item-meta {
+  height: 50px;
+  display: inline-block;
+}
+
+.item-container {
+  margin-top: 10px;
+}
+
+.item-row {
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.comment {
+  border-top: 1px solid #ddd;
+  padding-top: 5px;
+}
+
+.comment-links {
+  list-style-type: none;
+}
+
+.comment-content {
+  font-size: 13px;
+}

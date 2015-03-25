@@ -59,13 +59,11 @@ Brhub.items = function(ep, start, n) {
   });
 };
 
-Brhub.create = function() {
+Brhub.create = function(data) {
   return Req({
     method: 'POST',
     ep: '/api/b/',
-    data: {
-      name: 'f'
-    }
+    data: data
   });
 };
 

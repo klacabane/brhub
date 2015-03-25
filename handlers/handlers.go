@@ -3,18 +3,29 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 
 	"github.com/klacabane/brhub/db"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/zenazn/goji/web"
 )
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 type authp struct {
 	Name, Password string
+}
+
+type brhubp struct {
+	Name, Color string
 }
 
 type itemp struct {
@@ -150,7 +161,7 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	_, err := session.DB().Brhub(params.Brhub)
+	b, err := session.DB().Brhub(params.Brhub)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return 422, nil, fmt.Errorf("invalid brhub")
@@ -159,9 +170,9 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	}
 
 	item := db.NewItem()
-	item.Title = params.Title
+	item.SetTitleAndTags(params.Title)
 	item.Content = params.Content
-	item.Brhub = params.Brhub
+	item.Brhub = b
 	item.Type = params.Type
 	// validate link
 	item.Link = params.Link
@@ -236,7 +247,7 @@ func AllBrhubs(appCtx *Context, c web.C, r *http.Request) (int, interface{}, err
 }
 
 func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	var params authp
+	var params brhubp
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&params); err != nil {
@@ -253,8 +264,9 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 	}
 
 	b := &db.Brhub{
-		Id:   bson.NewObjectId(),
-		Name: params.Name,
+		Id:       bson.NewObjectId(),
+		Name:     params.Name,
+		ColorHex: colorful.WarmColor().Hex(),
 	}
 
 	status := 201

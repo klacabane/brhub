@@ -27,8 +27,8 @@ var app = app || {};
     getNextItems: function() {
       this.current += this.limit;
       this.getItems();
-    },
-  };
+    }
+  }
 
   module.controller = function(opts) {
     module.vm.src = opts.src;
@@ -38,36 +38,40 @@ var app = app || {};
   }
 
   module.view = function(ctrl) {
-    return m('div', [
+    return m('div[class="item-container"]', [
       module.vm.items().map(function(item) {
-        return m("div", [
-          m('p',[
-            m('a', {
-              href: item.type === 'link' ? item.link : '/#/items/'+item.id,
-            }, [
-              m('img', {
-                src: '',
-                width: 50,
-                height: 50,
-              }),
-              m('p', item.title)
+        return m('div[class="item-row"]', [
+          m('a[class="item-image"]', {
+            href: item.type === 'link' ? item.link : '/#/items/'+item.id
+          }, [
+            m('img', {
+              src: '',
+              width: 50,
+              height: 50
+            })
+          ]),
+          m('div[class="item-meta"]', [
+            m('a[style="display: block; font-size: 16px; margin-bottom: 5px;"]', {href: item.type === 'link' ? item.link : '/#/items/'+item.id}, item.title),
+            m('p', [
+              m('em', 'by '+item.author.name+' '),
+              m('strong', {
+                onclick: function(e) {
+                  m.route('/b/'+item.brhub.name);
+                },
+                style: {
+                  display: module.vm.src === 'timeline' ? 'inline' : 'none',
+                  color: item.brhub.color,
+                  cursor: 'pointer',
+                }
+              }, item.brhub.name)
             ])
           ]),
           m('p', [
-            m('span', 'by '+item.author.name),
-            m('span', {
-              onclick: function(e) {
-                m.route('/b/'+item.brhub);
-              },
-              style: {display: module.vm.src === 'timeline' ? 'inline' : 'none'},
-            }, item.brhub)
-          ]),
-          m('p', [
-            m('a', {
+            m('a[style="font-size: 13px;"]', {
               href: '/#/items/'+item.id,
             }, item.commentCount === 1 ? item.commentCount + ' comment' : item.commentCount + ' comments')
           ])
-        ]) 
+        ])
       }),
       m('button', {
         onclick: module.vm.getPrevItems.bind(module.vm), 
@@ -80,21 +84,5 @@ var app = app || {};
           display: module.vm.showNext ? 'inline' : 'none'
         }}, 'Next')
     ]);
-  }
-
-  var sort = function(list) {
-    return {
-      onclick: function(e) {
-        var prop = e.target.getAttribute('data-sort-by'),
-        first = list[0];
-      
-        if (prop) {
-          list.sort(function(a, b) {
-            return a[prop] > b[prop] ? 1 : a[prop] < b[prop] ? -1 : 0;
-          });
-          if (first === list[0]) list.reverse();
-        }
-      }
-    }
   }
 })(app.grid = {});

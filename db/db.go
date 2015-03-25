@@ -145,6 +145,9 @@ func (db *DB) AddBrhub(b *Brhub) error {
 func (db *DB) AllBrhubs() ([]Brhub, error) {
 	var all []Brhub
 	err := db.C("brhubs").Find(nil).All(&all)
+	if all == nil {
+		all = []Brhub{}
+	}
 	return all, err
 }
 
@@ -166,7 +169,7 @@ func (db *DB) BrhubExists(name string) (bool, error) {
 func (db *DB) Items(brhubName string, skip, limit int) ([]*Item, bool, error) {
 	items := make([]*Item, 0)
 	err := db.C("items").
-		Find(bson.M{"brhub": brhubName}).
+		Find(bson.M{"brhub.name": brhubName}).
 		Skip(skip).Limit(limit + 1).
 		Sort("-date").
 		All(&items)

@@ -88,7 +88,7 @@ func TestTimeline(t *testing.T) {
 	code, data, err := Timeline(ctx, c, req)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, code)
-	assert.Equal(t, []*db.Item{}, data.([]*db.Item))
+	assert.False(t, data.(page).Hasmore)
 }
 
 func TestCreateBrhub(t *testing.T) {
@@ -109,9 +109,7 @@ func TestCreateBrhub(t *testing.T) {
 }
 
 func TestInvalidCreateItem(t *testing.T) {
-	params := struct {
-		Brhub, Title, Content string
-	}{"foo", "foobar", "lorem ipsum"}
+	params := itemp{"foo", "foobar", "lorem ipsum", db.TYPE_TEXT, ""}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/api/items/", bytes.NewBuffer(b))
@@ -133,9 +131,7 @@ func TestInvalidCreateItem(t *testing.T) {
 }
 
 func TestValidCreateItem(t *testing.T) {
-	params := struct {
-		Brhub, Title, Content string
-	}{brhub_test.Id.Hex(), "foobar", "lorem ipsum"}
+	params := itemp{brhub_test.Name, "foobar", "lorem ipsum", db.TYPE_TEXT, ""}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/api/items/", bytes.NewBuffer(b))
@@ -230,6 +226,7 @@ func TestCreateCommentWithParent(t *testing.T) {
 
 	item_test.Comments[0].Comments = append(
 		item_test.Comments[0].Comments, data.(*db.Comment))
+	item_test.CommentCount = 2
 }
 
 func TestItem(t *testing.T) {

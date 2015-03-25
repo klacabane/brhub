@@ -4,13 +4,15 @@ var app = app || {};
   'use strict';
 
   module.controller = function() {
-    if (storage.getUser() === null) return m.route('/');
+    var user = storage.getUser();
+    if (user === null) return m.route('/');
 
     var id = m.route.param('id');
     if (!/^[0-9a-fA-F]{24}$/.test(id)) return m.route('/timeline');
 
     this.item = m.prop({});
     this.commentModule;
+    this.banner = app.banner(user);
 
     Item.get(id).
       then(function(item) {
@@ -20,10 +22,13 @@ var app = app || {};
   }
 
   module.view = function(ctrl) {
-    return m('div', [
-      m('h2', ctrl.item().title),
-      m('p', ctrl.item().content),
-      ctrl.commentModule.view(),
-    ]);
+    return [
+      ctrl.banner.view(),
+      m('div[class="content"]', [
+        m('a[class="btn-link"]', {href: ctrl.item().link}, ctrl.item().title),
+        m('p', ctrl.item().content),
+        ctrl.commentModule.view()
+      ])
+    ]
   }
  })(app.items = {});
