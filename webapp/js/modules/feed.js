@@ -31,7 +31,7 @@ app.feed = function(src) {
       module.vm.banner.view(),
       m('div[class="content"]', [
         m('button[type="button"][class="btn btn-default btn-sm"][style="margin-right: 5px;"]', {onclick: module.vm.submit}, 'new item'),
-        m('button[type="button"][class="btn btn-default btn-sm"]', {onclick: module.vm.newBrhub}, 'new brhub'),
+        m('button[type="button"][class="btn btn-default btn-sm"]', {onclick: module.vm.newBrhub}, 'new theme'),
         app.grid.view(module.vm.grid)
       ])
     ]

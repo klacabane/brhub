@@ -11,6 +11,9 @@ var commentModule = function(parent, root) {
     sendReply: function(e) {
       e.preventDefault();
 
+      if (!module.vm.reply().length)
+        return;
+
       Comments.create({
         item: isItem ? parent.id : parent.item,
         parent: isItem ? '' : parent.id,
@@ -18,7 +21,9 @@ var commentModule = function(parent, root) {
       }).then(function(comment) {
         module.vm.childModules.splice(0, 0, new commentModule(comment, isItem));
         module.vm.reply('');
-        module.vm.showForm(false);
+        if (!isItem) {
+          module.vm.showForm(false);
+        }
       }, app.utils.processError);
     },
     childModules: parent.comments.map(function(child) {
@@ -30,7 +35,7 @@ var commentModule = function(parent, root) {
     var childs = [];
     if (!isItem)
       childs.push(
-        m('a', {href: ''}, parent.author.name),
+        m('a', {href: '/#/users/'+parent.author.name}, parent.author.name),
         m('p[class="comment-content"]', parent.content),
         m('div', [
           m('small[class="btn-link"][style="cursor: pointer;"]', {

@@ -18,7 +18,7 @@ app.banner = function(user) {
       if (user) {
         childs.push(
           m('div', {style: {'float': 'right'}}, [
-            m('a', {href: '/#/profile'}, user.name),
+            m('a', {href: '/#/users/'+user.name}, user.name),
             m('button[type="button"][class="btn btn-link btn-xs"]', {onclick: this.vm.signout}, 'Sign out'),
           ])
         );

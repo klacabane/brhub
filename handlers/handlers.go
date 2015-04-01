@@ -266,7 +266,7 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 	b := &db.Brhub{
 		Id:       bson.NewObjectId(),
 		Name:     params.Name,
-		ColorHex: colorful.WarmColor().Hex(),
+		ColorHex: colorful.HappyColor().Hex(),
 	}
 
 	status := 201

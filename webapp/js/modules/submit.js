@@ -57,9 +57,10 @@ app.newBrhub = {
 
       Brhub.all().then(this.brhubs, app.utils.processError);
     },
-    submitItem: function() {
-      var vm = module.vm;
+    submitItem: function(e) {
+      e.preventDefault();
 
+      var vm = module.vm;
       Item.create({
         type: vm.type(),
         title: vm.title(),
@@ -81,38 +82,50 @@ app.newBrhub = {
     return [
       module.vm.banner.view(),
       m('div[class="content"]', [
-        m('ul', [
-          m('li', {
+        m('p[class="text-primary"]', [
+          m('span', {
             onclick: function() {
               module.vm.type(LINK);
             }
-          }, 'Link'),
-          m('li', {
+          }, 'Link '),
+          m('span', {
             onclick: function() {
               module.vm.type(TEXT);
             }
           }, 'Text')
         ]),
-        m('input[name="title"][type="text"]', {
-          onchange: m.withAttr('value', module.vm.title)
-        }),
-        m('input[name="link"][type="text"]', {
-          onchange: m.withAttr('value', module.vm.link),
-          style: {display: module.vm.type() === LINK ? 'block' : 'none'}
-        }),
-        m('textarea[name="content"]', {
-          onchange: m.withAttr('value', module.vm.content),
-          style: {display: module.vm.type() === TEXT ? 'block' : 'none'}
-        }),
-        m('input[name="brhub"][type="text"]', {value: module.vm.brhub()}),
-        module.vm.brhubs().map(function(b) {
-          return m('span', {
-            onclick: function() {
-              module.vm.brhub(b.name);
-            }
-          }, b.name);
-        }),
-        m('input[type="submit"][value="submit"]', {onclick: module.vm.submitItem})
+        m('form', {style: {width: '280px'}}, [
+          m('input[type="text"][class="form-control"][name="title"][placeholder="title"]', {
+            onchange: m.withAttr('value', module.vm.title)
+          }),
+          m('input[type="text"][class="form-control"][name="link"][placeholder="link"]', {
+            onchange: m.withAttr('value', module.vm.link),
+            style: {display: module.vm.type() === LINK ? 'block' : 'none'}
+          }),
+          m('textarea[class="form-control"][name="content"]', {
+            onchange: m.withAttr('value', module.vm.content),
+            style: {display: module.vm.type() === TEXT ? 'block' : 'none'}
+          }),
+          m('input[type="text"][class="form-control"][name="brhub"][placeholder="theme"]', {
+            value: module.vm.brhub(),
+            onchange: m.withAttr('value', module.vm.brhub)
+          }),
+          m('p', module.vm.brhubs().map(function(b) {
+              return m('span', {
+                onclick: function() {
+                  module.vm.brhub(b.name);
+                },
+                style: {
+                  display: 'inline-block',
+                  color: b.color,
+                  cursor: 'pointer',
+                  'margin-right': '5px'
+                }
+              }, b.name);
+            })
+          ),
+          m('input[type="submit"][class="btn btn-default"][value="submit"]', {onclick: module.vm.submitItem})
+        ]),
       ])
     ]
   }

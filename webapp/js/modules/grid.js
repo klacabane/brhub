@@ -53,15 +53,16 @@ var app = app || {};
           m('div[class="item-meta"]', [
             m('a[style="display: block; font-size: 16px; margin-bottom: 5px;"]', {href: item.type === 'link' ? item.link : '/#/items/'+item.id}, item.title),
             m('p', [
-              m('em', 'by '+item.author.name+' '),
-              m('strong', {
+              'by ',
+              m('a[class="text-info"]', {href: '/#/users/'+item.author.name}, item.author.name+' '),
+              m('em', {
                 onclick: function(e) {
                   m.route('/b/'+item.brhub.name);
                 },
                 style: {
                   display: module.vm.src === 'timeline' ? 'inline' : 'none',
                   color: item.brhub.color,
-                  cursor: 'pointer',
+                  cursor: 'pointer'
                 }
               }, item.brhub.name)
             ])
@@ -73,16 +74,14 @@ var app = app || {};
           ])
         ])
       }),
-      m('button', {
+      m('button[class="btn btn-default btn-xs"]', {
         onclick: module.vm.getPrevItems.bind(module.vm), 
-        style: {
-          display: module.vm.showPrev ? 'inline' : 'none'
-        }}, 'Prev'),
-      m('button', {
+        disabled: module.vm.showPrev ? '' : 'disabled'
+      }, '< prev'),
+      m('button[class="btn btn-default btn-xs"]', {
         onclick: module.vm.getNextItems.bind(module.vm), 
-        style: {
-          display: module.vm.showNext ? 'inline' : 'none'
-        }}, 'Next')
+        disabled: module.vm.showNext ? '' : 'disabled'
+      }, 'next >')
     ]);
   }
 })(app.grid = {});

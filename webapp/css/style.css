@@ -44,3 +44,7 @@ body {
 .comment-content {
   font-size: 13px;
 }
+
+.form-control {
+  margin-bottom: 3px;
+}
