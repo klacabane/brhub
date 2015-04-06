@@ -3,7 +3,24 @@ body {
   margin: 0;
 }
 
-.content {
+.banner {
+  width: 100%;
+  background: #18bc9c;
+  height: 40px;
+  padding-top: 10px;
+  margin-bottom: 15px;
+} 
+
+.menu-avatar {
+  width: 35px;
+  margin-right: 10px;
+}
+
+.grid {
+  width: 100%;
+}
+
+.wrapper {
   width: 50%;
   margin: auto;
   padding-top: 30px;
@@ -28,23 +45,18 @@ body {
 }
 
 .item-row {
-  padding-top: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   border-top: 1px solid #ddd;
 }
 
-.comment {
-  border-top: 1px solid #ddd;
-  padding-top: 5px;
+.comment-form {
+  width: 250px !important;
 }
 
-.comment-links {
-  list-style-type: none;
-}
-
-.comment-content {
-  font-size: 13px;
-}
-
-.form-control {
-  margin-bottom: 3px;
+.comment-form textarea, .content textarea {
+  min-height: 65px !important;
+  height: 65px !important;
+  padding: 0.4em 0.5em !important;
+  margin-bottom: 5px !important;
 }

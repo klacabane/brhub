@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -33,12 +33,11 @@ func parseToken(val string) (db.Author, error) {
 	token, err := jwt.Parse(val, func(t *jwt.Token) (interface{}, error) {
 		return []byte("secretkey"), nil
 	})
-
 	if err == nil && token.Valid && bson.IsObjectIdHex(token.Claims["id"].(string)) {
 		return db.Author{
 			Id:   bson.ObjectIdHex(token.Claims["id"].(string)),
 			Name: token.Claims["name"].(string),
 		}, nil
 	}
-	return db.Author{}, fmt.Errorf("invalid token")
+	return db.Author{}, errors.New("invalid token")
 }

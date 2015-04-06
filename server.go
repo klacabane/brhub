@@ -12,7 +12,6 @@ import (
 
 func main() {
 	session := db.MainSession("localhost")
-
 	ctx := &handlers.Context{Session: session}
 
 	api := web.New()

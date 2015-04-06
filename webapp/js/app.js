@@ -21,7 +21,8 @@
     '/': app.feed('timeline'),
     '/b/:name': app.feed(),
     '/items/:id': app.items,
-    '/submit': app.submit,
-    '/brhub': app.newBrhub
+    '/submit': app.newItem,
+    '/theme': app.newTheme,
+    '/users/:name': app.profile
   });
 })(app = app || {});

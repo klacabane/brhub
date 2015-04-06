@@ -1,7 +1,7 @@
 package db
 
 import (
-	"fmt"
+	"errors"
 	"log"
 	"sort"
 
@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrFailAuth     = fmt.Errorf("auth failed")
-	ErrUserNotFound = fmt.Errorf("user not found")
+	ErrFailAuth     = errors.New("auth failed")
+	ErrUserNotFound = errors.New("user not found")
 )
 
 type Update map[string]interface{}
@@ -27,11 +27,11 @@ func MainSession(addr string) *Session {
 	}
 
 	ensureIndex := func(col string, key ...string) {
-		if err = session.DB("brhub").C(col).EnsureIndexKey(key...); err != nil {
+		if err := session.DB("brhub").C(col).EnsureIndexKey(key...); err != nil {
 			log.Fatal(err)
 		}
 	}
-
+	ensureIndex("users", "name")
 	ensureIndex("brhubs", "name")
 	ensureIndex("items", "-date")
 	ensureIndex("comments", "-date", "parent", "item")
@@ -63,12 +63,10 @@ func (db *DB) AuthWithToken(name string, pw string) (*User, error) {
 		}
 		return nil, err
 	}
-
 	if err = user.ComparePassword(pw); err != nil {
 		return nil, ErrFailAuth
 	}
 	err = user.GenerateToken()
-
 	return user, err
 }
 
@@ -80,18 +78,13 @@ func (db *DB) User(id bson.ObjectId) (*User, error) {
 
 func (db *DB) NewUser(name, password string) (*User, error) {
 	user := &User{Id: bson.NewObjectId(), Name: name}
-	err := user.SetPassword(password)
-	if err != nil {
+	if err := user.SetPassword(password); err != nil {
 		return nil, err
 	}
-
-	err = user.GenerateToken()
-	if err != nil {
+	if err := user.GenerateToken(); err != nil {
 		return nil, err
 	}
-	err = db.C("users").Insert(user)
-
-	return user, err
+	return user, db.C("users").Insert(user)
 }
 
 func (db *DB) Star(userId, itemId bson.ObjectId) (Update, error) {
@@ -118,7 +111,6 @@ func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, bool, er
 	if err != nil {
 		return nil, false, err
 	}
-
 	if len(user.Stars) > 0 {
 		for _, item := range items {
 			index := sort.Search(len(user.Stars), func(i int) bool {
@@ -195,9 +187,7 @@ func (db *DB) Item(id bson.ObjectId) (*Item, error) {
 	if err != nil {
 		return item, err
 	}
-
 	err = db.buildCommentTree(item)
-
 	return item, err
 }
 
@@ -212,7 +202,7 @@ func (db *DB) buildCommentTree(item *Item) error {
 	return <-errchan
 }
 
-func (db *DB) commentTree(parent Tree, c chan<- error) {
+func (db *DB) commentTree(parent Parent, c chan<- error) {
 	err := parent.GetChildrens(db)
 	if err != nil {
 		c <- err
@@ -247,7 +237,6 @@ func (db *DB) Upvote(itemId bson.ObjectId) (Update, error) {
 		ReturnNew: true,
 	}
 	_, err := db.C("items").FindId(itemId).Apply(change, &item)
-
 	return Update{"upvote": item.Upvote}, err
 }
 

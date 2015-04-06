@@ -1,80 +1,69 @@
 var app = app || {};
 
-app.banner = function(user) {
-  return {
-    vm: {
-      signout: function() {
-        storage.setUser(null);
-        m.route('/auth');
-      }
-    },
-    view: function() {
-      var childs = [
-        m('a', {href: user ? '/#/' : '/#/auth'}, [
-          m('img', {src: 'images/salty.png', width: 90, height: 90})
-        ])
-      ];
-
-      if (user) {
-        childs.push(
-          m('div', {style: {'float': 'right'}}, [
-            m('a', {href: '/#/users/'+user.name}, user.name),
-            m('button[type="button"][class="btn btn-link btn-xs"]', {onclick: this.vm.signout}, 'Sign out'),
-          ])
-        );
-      }
-
-      return m('div', {
-        style: {
-          width: '100%',
-          background: '#18bc9c',
-          height: '110px',
-          paddingTop: '10px',
-        },
-      }, [
-        m('div', {
-          style: {
-            width: '50%',
-            margin: 'auto',
-          },
-        }, childs)
-      ]);
-    }
-  };
+app.banner = function() {
+  return m('div[class="banner"]');
 };
 
-(function(module) {
-  module.controller = function() {
-    if (storage.getUser() !== null) return m.route('/timeline');
-
-    this.name = m.prop('');
-    this.password = m.prop('');
-    this.banner = app.banner();
-
-    this.signin = function(e) {
-      e.preventDefault();
-      User.signin(this.name(), this.password())
-        .then(function(user) {
-          storage.setUser(user);
-          m.route('/timeline');
-        }, app.utils.processError);
-    }.bind(this);
-  }
-
-  module.view = function(ctrl) {
-    return [
-      ctrl.banner.view(),
-      m('div[class="content"]', [
-        m('form[class="form-inline"]', [
-          m('input[class="form-control"][name="username"][placeholder="Name"][type="text"]', {
-            onchange: m.withAttr('value', ctrl.name)
-          }),
-          m('input[class="form-control"][name="password"][placeholder="Password"][type="password"]', {
-            onchange: m.withAttr('value', ctrl.password)
-          }),
-          m('button[class="btn btn-default"][type="submit"]', {onclick: ctrl.signin}, 'Sign in')
+app.usermenu = function() {
+  var user = storage.getUser();
+  return m('div[class="four wide column"]', [
+    m('div[class="ui secondary vertical menu"]', [
+      m('a[class="item"]', {href: '/#/users/'+user.name}, user.name),
+      m('a[class="item"]', {onclick: function() {
+        storage.setUser(null);
+        m.route('/auth');
+      }},'signout'),
+      m('div[class="item"]', [
+        m('div[class="ui search"]', [
+          m('div[class="ui mini icon input"]', [
+            m('input[type="text"][placeholder="search"]'),
+            m('i[class="search icon"]')
+          ]),
+          m('div[class="results"]')
         ])
       ])
-    ]
-  }
-})(app.auth = {});
+    ])
+  ]);
+}
+
+var auth = app.auth = {};
+auth.controller = function() {
+  if (storage.getUser() !== null) return m.route('/timeline');
+
+  this.name = m.prop('');
+  this.password = m.prop('');
+  this.signin = function(e) {
+    e.preventDefault();
+
+    User.signin(this.name(), this.password())
+      .then(function(user) {
+        storage.setUser(user);
+        m.route('/timeline');
+      }, app.utils.processError);
+  }.bind(this);
+}
+
+auth.view = function(ctrl) {
+  return [
+    app.banner(),
+    m('div[class="wrapper"]', [
+      m('form[class="ui form"]', [
+        m('div[class="three fields"]', [
+          m('div[class="field"]', [
+            m('input[name="username"][placeholder="Name"][type="text"]', {
+              onchange: m.withAttr('value', ctrl.name)
+            }),
+          ]),
+          m('div[class="field"]', [
+            m('input[name="password"][placeholder="Password"][type="password"]', {
+              onchange: m.withAttr('value', ctrl.password)
+            }),
+          ]),
+          m('div[class="field"]', [
+            m('button[class="ui button"][type="submit"]', {onclick: ctrl.signin}, 'Sign in')
+          ])
+        ])
+      ])
+    ])
+  ]
+}

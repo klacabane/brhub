@@ -38,16 +38,16 @@ Comments.create = function(data) {
   });
 }
 
-var Brhub = {};
+var Theme = {};
 
-Brhub.all = function() {
+Theme.all = function() {
   return Req({
     method: 'GET',
     ep: '/api/b/'
   });
 };
 
-Brhub.items = function(ep, start, n) {
+Theme.items = function(ep, start, n) {
   ep = ep === 'timeline' 
     ? 'timeline' 
     : 'b/' + ep;
@@ -59,7 +59,7 @@ Brhub.items = function(ep, start, n) {
   });
 };
 
-Brhub.create = function(data) {
+Theme.create = function(data) {
   return Req({
     method: 'POST',
     ep: '/api/b/',

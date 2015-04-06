@@ -44,10 +44,10 @@ func (user *User) GenerateToken() (err error) {
 	token.Claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
 	user.Token, err = token.SignedString([]byte("secretkey"))
-	return
+	return err
 }
 
-type Tree interface {
+type Parent interface {
 	GetChildrens(*DB) error
 	Childrens() []*Comment
 }
@@ -86,13 +86,15 @@ func (item *Item) Childrens() []*Comment {
 }
 
 func (item *Item) SetTitleAndTags(s string) {
-	item.Tags = tagExp.FindAllString(s, -1)
-
-	for i, raw := range item.Tags {
-		s = strings.Replace(s, raw, "", 1)
-		item.Tags[i] = strings.TrimSpace(raw[1 : len(raw)-1])
+	tags := tagExp.FindAllString(s, -1)
+	if len(tags) > 0 {
+		item.Tags = make([]string, len(tags))
+		for i, raw := range tags {
+			s = strings.Replace(s, raw, "", 1)
+			item.Tags[i] = strings.TrimSpace(raw[1 : len(raw)-1])
+		}
 	}
-	item.Title = s
+	item.Title = strings.TrimSpace(s)
 }
 
 func NewItem() *Item {
@@ -100,6 +102,7 @@ func NewItem() *Item {
 		Id:       bson.NewObjectId(),
 		Date:     time.Now().UnixNano(),
 		Comments: []*Comment{},
+		Tags:     []string{},
 	}
 }
 

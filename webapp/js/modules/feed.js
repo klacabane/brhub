@@ -1,4 +1,5 @@
 var app = app || {};
+
 app.feed = function(src) {
   var module = {};
 
@@ -7,7 +8,6 @@ app.feed = function(src) {
       this.user = m.prop(storage.getUser());
       if (this.user() === null) return m.route('/auth');
 
-      this.banner = app.banner(this.user());
       this.grid = new app.grid.controller({src: src || m.route.param('name')});
     },
     signout: function() {
@@ -17,8 +17,8 @@ app.feed = function(src) {
     submit: function() {
       m.route('/submit');
     },
-    newBrhub: function() {
-      m.route('/brhub');
+    newTheme: function() {
+      m.route('/theme');
     }
   }
 
@@ -28,15 +28,17 @@ app.feed = function(src) {
 
   module.view = function() {
     return [
-      module.vm.banner.view(),
-      m('div[class="content"]', [
-        m('button[type="button"][class="btn btn-default btn-sm"][style="margin-right: 5px;"]', {onclick: module.vm.submit}, 'new item'),
-        m('button[type="button"][class="btn btn-default btn-sm"]', {onclick: module.vm.newBrhub}, 'new theme'),
-        app.grid.view(module.vm.grid)
+      app.banner(),
+      m('div[class="ui grid"]', [
+        app.usermenu(),
+        m('div[class="ten wide column"]', [
+          m('button[type="button"][class="ui tiny button"][style="margin-right: 5px;"]', {onclick: module.vm.submit}, 'new item'),
+          m('button[type="button"][class="ui tiny button"]', {onclick: module.vm.newTheme}, 'new theme'),
+          app.grid.view(module.vm.grid)
+        ])
       ])
     ]
   }
 
   return module;
 }
-

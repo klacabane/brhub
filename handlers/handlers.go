@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -46,20 +48,21 @@ type page struct {
 	Items   []*db.Item `json:"items"`
 }
 
+func decodeParams(rc io.Reader, params interface{}) error {
+	decoder := json.NewDecoder(rc)
+	return decoder.Decode(&params)
+}
+
 func Auth(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	var params authp
-
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&params); err != nil {
-		return 400, nil, fmt.Errorf(http.StatusText(400))
+	if err := decodeParams(r.Body, &params); err != nil {
+		return 400, nil, errors.New(http.StatusText(400))
 	}
-
 	session := appCtx.SessionClone()
 	defer session.Close()
 
 	status := 200
-	user, err := session.DB().AuthWithToken(
-		params.Name, params.Password)
+	user, err := session.DB().AuthWithToken(params.Name, params.Password)
 	if err != nil {
 		if err == db.ErrFailAuth {
 			status = 401
@@ -78,7 +81,6 @@ func Timeline(appCtx *Context, c web.C, r *http.Request) (int, interface{}, erro
 	if skip, _ = strconv.ParseInt(c.URLParams["skip"], 10, 64); skip < 0 {
 		skip = 0
 	}
-
 	session := appCtx.SessionClone()
 	defer session.Close()
 
@@ -102,18 +104,16 @@ func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) 
 	if skip, _ = strconv.ParseInt(c.URLParams["skip"], 10, 64); skip < 0 {
 		skip = 0
 	}
-
 	session := appCtx.SessionClone()
 	defer session.Close()
 
 	_, err := session.DB().Brhub(c.URLParams["name"])
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 422, nil, fmt.Errorf("invalid brhub")
+			return 422, nil, errors.New("invalid brhub")
 		}
-		return 500, nil, fmt.Errorf(http.StatusText(500))
+		return 500, nil, errors.New(http.StatusText(500))
 	}
-
 	items, hasmore, err := session.DB().Items(c.URLParams["name"], int(skip), int(limit))
 	if err != nil {
 		return 500, nil, err
@@ -127,7 +127,7 @@ func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	}
 
 	if !bson.IsObjectIdHex(id) {
-		return 422, nil, fmt.Errorf("invalid id")
+		return 422, nil, errors.New("invalid id")
 	}
 	itemId := bson.ObjectIdHex(id)
 
@@ -151,11 +151,11 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&params); err != nil {
-		return 500, nil, fmt.Errorf(http.StatusText(500))
+		return 500, nil, errors.New(http.StatusText(500))
 	}
 
 	if params.Type != db.TYPE_TEXT && params.Type != db.TYPE_LINK {
-		return 422, nil, fmt.Errorf("invalid type")
+		return 422, nil, errors.New("invalid type")
 	}
 
 	session := appCtx.SessionClone()
@@ -164,7 +164,7 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	b, err := session.DB().Brhub(params.Brhub)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 422, nil, fmt.Errorf("invalid brhub")
+			return 422, nil, errors.New("invalid brhub")
 		}
 		return 500, nil, err
 	}
@@ -188,7 +188,7 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 
 func Upvote(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(c.URLParams["id"]) {
-		return 422, nil, fmt.Errorf("invalid item")
+		return 422, nil, errors.New("invalid item")
 	}
 
 	session := appCtx.SessionClone()
@@ -208,7 +208,7 @@ func Upvote(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error)
 
 func Star(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	if !bson.IsObjectIdHex(r.FormValue("item")) {
-		return 422, nil, fmt.Errorf("invalid item")
+		return 422, nil, errors.New("invalid item")
 	}
 
 	session := appCtx.SessionClone()
@@ -251,7 +251,7 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&params); err != nil {
-		return 400, nil, fmt.Errorf(http.StatusText(400))
+		return 400, nil, errors.New(http.StatusText(400))
 	}
 
 	session := appCtx.SessionClone()
@@ -290,25 +290,25 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 
 	if len(params.Parent) > 0 {
 		if !bson.IsObjectIdHex(params.Parent) {
-			return 422, nil, fmt.Errorf("invalid parent")
+			return 422, nil, errors.New("invalid parent")
 		}
 		params.parent = bson.ObjectIdHex(params.Parent)
 
 		_, err := session.DB().Comment(params.parent)
 		if err != nil {
 			if err == mgo.ErrNotFound {
-				return 422, nil, fmt.Errorf("invalid parent")
+				return 422, nil, errors.New("invalid parent")
 			}
-			return 500, nil, fmt.Errorf(http.StatusText(500))
+			return 500, nil, errors.New(http.StatusText(500))
 		}
 	}
 
 	_, err := session.DB().Item(params.Item)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 422, nil, fmt.Errorf("invalid item")
+			return 422, nil, errors.New("invalid item")
 		}
-		return 500, nil, fmt.Errorf(http.StatusText(500))
+		return 500, nil, errors.New(http.StatusText(500))
 	}
 
 	comment := db.NewComment()

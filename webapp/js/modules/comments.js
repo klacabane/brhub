@@ -1,13 +1,11 @@
 var app = app || {};
 
-var commentModule = function(parent, root) {
+var commentModule = function(parent) {
   var module = {};
-  var isItem = parent.hasOwnProperty('brhub');
 
   module.vm = {
-    margin: (isItem || root) ? 0 : 40,
     reply: m.prop(''),
-    showForm: m.prop(isItem),
+    showForm: m.prop(false),
     sendReply: function(e) {
       e.preventDefault();
 
@@ -15,55 +13,53 @@ var commentModule = function(parent, root) {
         return;
 
       Comments.create({
-        item: isItem ? parent.id : parent.item,
-        parent: isItem ? '' : parent.id,
+        item: parent.item,
+        parent: parent.id,
         content: module.vm.reply()
       }).then(function(comment) {
-        module.vm.childModules.splice(0, 0, new commentModule(comment, isItem));
+        module.vm.childModules.splice(0, 0, new commentModule(comment));
         module.vm.reply('');
-        if (!isItem) {
-          module.vm.showForm(false);
-        }
+        module.vm.showForm(false);
       }, app.utils.processError);
     },
     childModules: parent.comments.map(function(child) {
-      return new commentModule(child, isItem);
+      return new commentModule(child);
     })
   };
 
   module.view = function() {
-    var childs = [];
-    if (!isItem)
-      childs.push(
-        m('a', {href: '/#/users/'+parent.author.name}, parent.author.name),
-        m('p[class="comment-content"]', parent.content),
-        m('div', [
-          m('small[class="btn-link"][style="cursor: pointer;"]', {
+    return m('div[class="comment"]', [
+      m('a[class="avatar"]', [
+        m('img', {src: 'images/avatar.jpg'})
+      ]),
+      m('div[class="content"]', [
+        m('a[class="author"]', parent.author.name),
+        m('div[class="text"]', parent.content),
+        m('div[class="actions"]', [
+          m('a[class="reply"]', {
             onclick: function() {
               module.vm.showForm(!module.vm.showForm());
             }
           }, 'Reply')
-        ])
-      );
- 
-    childs.push(
-      m('form', {style: {display: module.vm.showForm() ? 'block' : 'none'}}, [
-        m('div[class="form-group"]', [
-          m('textarea[style="width: 200px; margin-bottom: 2px;"][class="form-control"][name="content"]', {
+        ]),
+        m('form[class="ui reply form comment-form"]', {style: {display: module.vm.showForm() ? 'block' : 'none'}}, [
+          m('textarea', {
             onchange: m.withAttr('value', module.vm.reply),
             value: module.vm.reply()
           }),
-          m('button[type="submit"][class="btn btn-default btn-xs"]', {
-            onclick: module.vm.sendReply
-          }, 'Reply')
+          m('button[class="ui mini blue button"]', {onclick: module.vm.sendReply}, 'Reply')
         ])
       ]),
-      m('div', module.vm.childModules.map(function(sub) {
-        return sub.view();
-      }))
-    );
-
-    return m('div[class="comment"]', {style: {marginLeft: module.vm.margin+'px'}}, childs);
+      m('div[class="comments"]', {
+          style: {
+            display: module.vm.childModules.length ? 'block' : 'none'
+          }
+        }, 
+        module.vm.childModules.map(function(mod) {
+          return mod.view();
+        })
+      )
+    ])
   };
 
   return module;

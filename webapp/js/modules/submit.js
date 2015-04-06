@@ -1,34 +1,38 @@
 var app = app || {};
 
-app.newBrhub = {
+app.newTheme = {
   controller: function() {
     var user = storage.getUser();
     if (user === null) return m.route('/auth');
 
-    this.banner = app.banner(user);
-
     this.name = m.prop('');
-
-    this.submitBrhub = function(e) {
+    this.submitTheme = function(e) {
       e.preventDefault();
 
-      Brhub.create({
-        name: this.name(),
-      }).then(function(b) {
-        console.log(b)
+      Theme.create({
+        name: this.name()
+      }).then(function(theme) {
+        m.route('/');
       }, 
       app.utils.processError);
     }.bind(this);
   },
   view: function(ctrl) {
     return [
-      ctrl.banner.view(),
-      m('div[class="content"]', [
-        m('form[class="form-inline"]', [
-          m('input[type="text"][class="form-control"][name="name"][placeholder="name"]', {
-            onchange: m.withAttr('value', ctrl.name)
-          }),
-          m('input[type="submit"][value="submit"][class="btn btn-default"]', {onclick: ctrl.submitBrhub})
+      app.banner(),
+      m('div[class="ui grid"]', [
+        app.usermenu(),
+        m('div[class="ten wide column"]', [
+          m('form[class="ui form"]', [
+            m('div[class="eight wide field"]', [
+              m('input[type="text"][name="name"][placeholder="name"]', {
+                onchange: m.withAttr('value', ctrl.name)
+              })
+            ]),
+            m('div[class="field"]', [
+              m('input[type="submit"][value="submit"][class="ui tiny blue button"]', {onclick: ctrl.submitTheme})
+            ])
+          ])
         ])
       ])
     ];
@@ -46,16 +50,14 @@ app.newBrhub = {
       var user = storage.getUser();
       if (user === null) return m.route('/auth');
 
-      this.banner = app.banner(user);
-
       this.type = m.prop(t || LINK);
       this.title = m.prop('');
       this.link = m.prop('');
       this.content = m.prop('');
-      this.brhub = m.prop('');
-      this.brhubs = m.prop([]);
+      this.theme = m.prop('');
+      this.themes = m.prop([]);
 
-      Brhub.all().then(this.brhubs, app.utils.processError);
+      Theme.all().then(this.themes, app.utils.processError);
     },
     submitItem: function(e) {
       e.preventDefault();
@@ -66,10 +68,10 @@ app.newBrhub = {
         title: vm.title(),
         link: vm.link(),
         content: vm.content(),
-        brhub: vm.brhub()
+        brhub: vm.theme()
       }).then(function(item) {
         console.log(item);
-        m.route('/b/' + vm.brhub());
+        m.route('/b/' + vm.theme());
       }, app.utils.processError);
     }
   }
@@ -80,53 +82,68 @@ app.newBrhub = {
 
   module.view = function(ctrl) {
     return [
-      module.vm.banner.view(),
-      m('div[class="content"]', [
-        m('p[class="text-primary"]', [
-          m('span', {
-            onclick: function() {
-              module.vm.type(LINK);
-            }
-          }, 'Link '),
-          m('span', {
-            onclick: function() {
-              module.vm.type(TEXT);
-            }
-          }, 'Text')
-        ]),
-        m('form', {style: {width: '280px'}}, [
-          m('input[type="text"][class="form-control"][name="title"][placeholder="title"]', {
-            onchange: m.withAttr('value', module.vm.title)
-          }),
-          m('input[type="text"][class="form-control"][name="link"][placeholder="link"]', {
-            onchange: m.withAttr('value', module.vm.link),
-            style: {display: module.vm.type() === LINK ? 'block' : 'none'}
-          }),
-          m('textarea[class="form-control"][name="content"]', {
-            onchange: m.withAttr('value', module.vm.content),
-            style: {display: module.vm.type() === TEXT ? 'block' : 'none'}
-          }),
-          m('input[type="text"][class="form-control"][name="brhub"][placeholder="theme"]', {
-            value: module.vm.brhub(),
-            onchange: m.withAttr('value', module.vm.brhub)
-          }),
-          m('p', module.vm.brhubs().map(function(b) {
-              return m('span', {
-                onclick: function() {
-                  module.vm.brhub(b.name);
-                },
-                style: {
-                  display: 'inline-block',
-                  color: b.color,
-                  cursor: 'pointer',
-                  'margin-right': '5px'
-                }
-              }, b.name);
-            })
-          ),
-          m('input[type="submit"][class="btn btn-default"][value="submit"]', {onclick: module.vm.submitItem})
+      app.banner(),
+      m('div[class="ui grid"]', [
+        app.usermenu(),
+        m('div[class="ten wide column"]', [
+          m('div[class="ui tabular menu"]', [
+            m('a[class="item active"]', {
+              onclick: function() {
+                module.vm.type(LINK);
+                $('.active').removeClass('active');
+                $(this).addClass('active');
+              }
+            }, 'Link '),
+            m('a[class="item"]', {
+              onclick: function() {
+                module.vm.type(TEXT);
+                $('.active').removeClass('active');
+                $(this).addClass('active');
+              }
+            }, 'Text')
+          ]),
+          m('form[class="ui form"]', {style: {width: '280px'}}, [
+            m('div[class="field"]', [
+              m('input[type="text"][name="title"][placeholder="title"]', {
+                onchange: m.withAttr('value', module.vm.title)
+              })
+            ]),
+            m('div[class="field"]', [
+              m('input[type="text"][name="link"][placeholder="link"]', {
+                onchange: m.withAttr('value', module.vm.link),
+                style: {display: module.vm.type() === LINK ? 'block' : 'none'}
+              })
+            ]),
+            m('div[class="field"]', [
+              m('textarea[name="content"]', {
+                onchange: m.withAttr('value', module.vm.content),
+                style: {display: module.vm.type() === TEXT ? 'block' : 'none'}
+              })
+            ]),
+            m('div[class="field"]', [
+              m('input[type="text"][name="brhub"][placeholder="theme"]', {
+                value: module.vm.theme(),
+                onchange: m.withAttr('value', module.vm.theme)
+              })
+            ]),
+            m('p', module.vm.themes().map(function(theme) {
+                return m('span', {
+                  onclick: function() {
+                    module.vm.theme(theme.name);
+                  },
+                  style: {
+                    display: 'inline-block',
+                    color: theme.color,
+                    cursor: 'pointer',
+                    'margin-right': '5px'
+                  }
+                }, theme.name);
+              })
+            ),
+            m('input[type="submit"][class="ui tiny blue button"][value="submit"]', {onclick: module.vm.submitItem})
+          ])
         ]),
       ])
     ]
   }
-})(app.submit = {});
+})(app.newItem = {});
