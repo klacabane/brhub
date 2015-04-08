@@ -9,14 +9,25 @@ app.usermenu = function() {
   return m('div[class="four wide column"]', [
     m('div[class="ui secondary vertical menu"]', [
       m('a[class="item"]', {href: '/#/users/'+user.name}, user.name),
+      m('a[class="item"]', {href: '/#/'}, 'home'),
       m('a[class="item"]', {onclick: function() {
         storage.setUser(null);
         m.route('/auth');
       }},'signout'),
       m('div[class="item"]', [
-        m('div[class="ui search"]', [
+        m('div[class="ui fluid category search"]', [
           m('div[class="ui mini icon input"]', [
-            m('input[type="text"][placeholder="search"]'),
+            m('input[class="prompt"][type="text"][placeholder="search"]', {onfocus: function() {
+              $('.ui.search').search({
+                type: 'category',
+                apiSettings: {
+                  url: '/api/search/{$query}',
+                  beforeXHR: function(xhr) {
+                    xhr.setRequestHeader('X-token', user.token);
+                  }
+                }
+              });
+            }}),
             m('i[class="search icon"]')
           ]),
           m('div[class="results"]')

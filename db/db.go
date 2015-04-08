@@ -249,3 +249,40 @@ func (db *DB) Comment(id bson.ObjectId) (Comment, error) {
 func (db *DB) AddComment(c *Comment) error {
 	return db.C("comments").Insert(c)
 }
+
+type SearchResult struct {
+	Name    string      `json:"name"`
+	Results interface{} `json:"results"`
+	Len     int         `json:"-"`
+}
+
+type SearchFunc func(*DB, string) (*SearchResult, error)
+
+func SearchThemes(db *DB, term string) (*SearchResult, error) {
+	var themes []*Brhub
+	err := db.C("brhubs").Find(
+		bson.M{"name": bson.RegEx{"(.*)" + term + "(.*)", "i"}}).All(&themes)
+	for _, t := range themes {
+		t.Title = t.Name
+		t.Url = "/#/b/" + t.Name
+	}
+	return &SearchResult{
+		Name:    "Themes",
+		Results: themes,
+		Len:     len(themes),
+	}, err
+}
+
+func SearchItems(db *DB, term string) (*SearchResult, error) {
+	var items []*Item
+	err := db.C("items").Find(
+		bson.M{"title": bson.RegEx{"(.*)" + term + "(.*)", "i"}}).All(&items)
+	for _, item := range items {
+		item.Url = "/#/items/" + item.Id.Hex()
+	}
+	return &SearchResult{
+		Name:    "Items",
+		Results: items,
+		Len:     len(items),
+	}, err
+}

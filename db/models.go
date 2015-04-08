@@ -19,6 +19,11 @@ type Author struct {
 	Name string        `json:"name"`
 }
 
+type searchProps struct {
+	Title string `json:"title,omitempty"`
+	Url   string `json:"url,omitempty"`
+}
+
 type User struct {
 	Id       bson.ObjectId   `json:"id" bson:"_id,omitempty"`
 	Name     string          `json:"name"`
@@ -71,6 +76,7 @@ type Item struct {
 	Upvote       int           `json:"upvote"`
 	Starred      bool          `json:"starred" bson:"-"`
 	Type         string        `json:"type"`
+	searchProps
 }
 
 func (item *Item) GetChildrens(db *DB) error {
@@ -110,6 +116,7 @@ type Brhub struct {
 	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Name     string        `json:"name"`
 	ColorHex string        `json:"color"`
+	searchProps
 }
 
 type Comment struct {

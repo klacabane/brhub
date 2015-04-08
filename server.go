@@ -30,6 +30,8 @@ func main() {
 
 	api.Patch("/api/users/stars", handlers.AppHandler{ctx, handlers.Star})
 
+	api.Get("/api/search/:term", handlers.AppHandler{ctx, handlers.Search})
+
 	mux := web.New()
 	mux.Post("/auth", handlers.AppHandler{ctx, handlers.Auth})
 	mux.Handle("/api/*", api)

@@ -330,3 +330,29 @@ func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{},
 
 	return status, comment, err
 }
+
+func Search(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	session := appCtx.SessionClone()
+	defer session.Close()
+
+	term := c.URLParams["term"]
+	res := make(map[string]*db.SearchResult)
+	funcs := []db.SearchFunc{
+		db.SearchThemes,
+		db.SearchItems,
+	}
+
+	// TODO: bm goroutines
+	for _, fn := range funcs {
+		sres, err := fn(session.DB(), term)
+		if err != nil {
+			return 500, nil, err
+		}
+		if sres.Len > 0 {
+			res[sres.Name] = sres
+		}
+	}
+	return 200, map[string]interface{}{
+		"results": res,
+	}, nil
+}
