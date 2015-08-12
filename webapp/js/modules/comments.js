@@ -28,29 +28,29 @@ var commentModule = function(parent) {
   };
 
   module.view = function() {
-    return m('div[class="comment"]', [
-      m('a[class="avatar"]', [
+    return m('div.comment', [
+      m('a.avatar', [
         m('img', {src: 'images/avatar.jpg'})
       ]),
-      m('div[class="content"]', [
-        m('a[class="author"]', parent.author.name),
-        m('div[class="text"]', parent.content),
-        m('div[class="actions"]', [
-          m('a[class="reply"]', {
+      m('div.content', [
+        m('a.author', parent.author.name),
+        m('div.text', parent.content),
+        m('div.actions', [
+          m('a.reply', {
             onclick: function() {
               module.vm.showForm(!module.vm.showForm());
             }
           }, 'Reply')
         ]),
-        m('form[class="ui reply form comment-form"]', {style: {display: module.vm.showForm() ? 'block' : 'none'}}, [
+        m('form.ui.reply.form.comment-form', {style: {display: module.vm.showForm() ? 'block' : 'none'}}, [
           m('textarea', {
             onchange: m.withAttr('value', module.vm.reply),
             value: module.vm.reply()
           }),
-          m('button[class="ui mini blue button"]', {onclick: module.vm.sendReply}, 'Reply')
+          m('button.ui.mini.blue.button', {onclick: module.vm.sendReply}, 'Reply')
         ])
       ]),
-      m('div[class="comments"]', {
+      m('div.comments', {
           style: {
             display: module.vm.childModules.length ? 'block' : 'none'
           }

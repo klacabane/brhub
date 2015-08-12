@@ -38,10 +38,11 @@ var app = app || {};
   }
 
   module.view = function(ctrl) {
-    return m('div[class="item-container"]', [
+    return m('div.item-container', [
       module.vm.items().map(function(item) {
-        return m('div[class="item-row"]', [
-          m('a[class="item-image"]', {
+        return m('div.item-row', [
+        /*
+          m('a.item-image', {
             href: item.type === 'link' ? item.link : '/#/items/'+item.id
           }, [
             m('img', {
@@ -50,11 +51,12 @@ var app = app || {};
               height: 50
             })
           ]),
-          m('div[class="item-meta"]', [
+        */
+          m('div.item-meta', [
             m('a[style="display: block; font-size: 16px; margin-bottom: 5px;"]', {href: item.type === 'link' ? item.link : '/#/items/'+item.id}, item.title),
             m('p', [
               'by ',
-              m('a[class="text-info"]', {href: '/#/users/'+item.author.name}, item.author.name),
+              m('a.text-info', {href: '/#/users/'+item.author.name}, item.author.name),
               m('em', {
                 onclick: function(e) {
                   m.route('/b/'+item.brhub.name);
@@ -75,17 +77,17 @@ var app = app || {};
           ])
         ])
       }),
-      m('button[class="ui tiny icon button"]', {
+      m('button.ui.tiny.icon.button', {
         onclick: module.vm.getPrevItems.bind(module.vm), 
         disabled: module.vm.showPrev ? '' : 'disabled'
       }, [
-        m('i[class="left chevron icon"]')
+        m('i.left.chevron.icon')
       ]),
-      m('button[class="ui tiny icon button"]', {
+      m('button.ui.tiny.icon.button', {
         onclick: module.vm.getNextItems.bind(module.vm), 
         disabled: module.vm.showNext ? '' : 'disabled'
       }, [
-        m('i[class="right chevron icon"]')
+        m('i.right.chevron.icon')
       ])
     ]);
   }

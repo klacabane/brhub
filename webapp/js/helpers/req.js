@@ -13,7 +13,7 @@ var Req = function(opts, preventAuth)  {
     },
     extract: function(xhr) {
       return xhr.status >= 400 
-        ? JSON.stringify({err: JSON.parse(xhr.responseText).msg, status: xhr.status})
+        ? JSON.stringify({msg: JSON.parse(xhr.responseText).msg, status: xhr.status})
         : xhr.responseText;
     }
   })

@@ -29,11 +29,11 @@ app.feed = function(src) {
   module.view = function() {
     return [
       app.banner(),
-      m('div[class="ui grid"]', [
+      m('div.ui.grid', [
         app.usermenu(),
-        m('div[class="ten wide column"]', [
-          m('button[type="button"][class="ui tiny button"][style="margin-right: 5px;"]', {onclick: module.vm.submit}, 'new item'),
-          m('button[type="button"][class="ui tiny button"]', {onclick: module.vm.newTheme}, 'new theme'),
+        m('div.ten.wide.column', [
+          m('button.ui.tiny.button[type="button"][style="margin-right: 5px;"]', {onclick: module.vm.submit}, 'new item'),
+          m('button.ui.tiny.button[type="button"]', {onclick: module.vm.newTheme}, 'new theme'),
           app.grid.view(module.vm.grid)
         ])
       ])

@@ -1,36 +1,40 @@
 var app = app || {};
 
 app.banner = function() {
-  return m('div[class="banner"]');
+  return m('div.banner');
 };
 
 app.usermenu = function() {
   var user = storage.getUser();
-  return m('div[class="four wide column"]', [
-    m('div[class="ui secondary vertical menu"]', [
-      m('a[class="item"]', {href: '/#/users/'+user.name}, user.name),
-      m('a[class="item"]', {href: '/#/'}, 'home'),
-      m('a[class="item"]', {onclick: function() {
+  return m('div.four.wide.column', [
+    m('div.ui.secondary.vertical.menu', [
+      m('a.item', {href: '/#/users/'+user.name}, user.name),
+      m('a.item', {href: '/#/'}, 'home'),
+      m('a.item', {onclick: function() {
         storage.setUser(null);
         m.route('/auth');
       }},'signout'),
-      m('div[class="item"]', [
-        m('div[class="ui fluid category search"]', [
-          m('div[class="ui mini icon input"]', [
-            m('input[class="prompt"][type="text"][placeholder="search"]', {onfocus: function() {
-              $('.ui.search').search({
-                type: 'category',
-                apiSettings: {
-                  url: '/api/search/{$query}',
-                  beforeXHR: function(xhr) {
-                    xhr.setRequestHeader('X-token', user.token);
-                  }
+      m('div.item', [
+        m('div.ui.fluid.category.search', [
+          m('div.ui.mini.icon.input', [
+            m('input.prompt[type="text"][placeholder="search"]', {
+              config: function(elem, init, ctx) {
+                if (!init) {
+                  $('.ui.search').search({
+                    type: 'category',
+                    apiSettings: {
+                      url: '/api/search/{$query}',
+                      beforeXHR: function(xhr) {
+                        xhr.setRequestHeader('X-token', user.token);
+                      }
+                    }
+                  });
                 }
-              });
-            }}),
-            m('i[class="search icon"]')
+              }
+            }),
+            m('i.search.icon')
           ]),
-          m('div[class="results"]')
+          m('div.results')
         ])
       ])
     ])
@@ -57,20 +61,20 @@ auth.controller = function() {
 auth.view = function(ctrl) {
   return [
     app.banner(),
-    m('div[class="wrapper"]', [
-      m('form[class="ui form"]', [
-        m('div[class="three fields"]', [
-          m('div[class="field"]', [
+    m('div.wrapper', [
+      m('form.ui.form', [
+        m('div.three.fields', [
+          m('div.field', [
             m('input[name="username"][placeholder="Name"][type="text"]', {
               onchange: m.withAttr('value', ctrl.name)
             }),
           ]),
-          m('div[class="field"]', [
+          m('div.field', [
             m('input[name="password"][placeholder="Password"][type="password"]', {
               onchange: m.withAttr('value', ctrl.password)
             }),
           ]),
-          m('div[class="field"]', [
+          m('div.field', [
             m('button[class="ui button"][type="submit"]', {onclick: ctrl.signin}, 'Sign in')
           ])
         ])
