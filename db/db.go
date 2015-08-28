@@ -32,7 +32,7 @@ func MainSession(addr string) *Session {
 		}
 	}
 	ensureIndex("users", "name")
-	ensureIndex("brhubs", "name")
+	ensureIndex("themes", "name")
 	ensureIndex("items", "-date")
 	ensureIndex("comments", "-date", "parent", "item")
 	return &Session{S: session}
@@ -130,38 +130,38 @@ func (db *DB) Timeline(userId bson.ObjectId, skip, limit int) ([]*Item, bool, er
 	return items, hasmore, err
 }
 
-func (db *DB) AddBrhub(b *Brhub) error {
-	return db.C("brhubs").Insert(b)
+func (db *DB) AddTheme(theme *Theme) error {
+	return db.C("themes").Insert(theme)
 }
 
-func (db *DB) AllBrhubs() ([]Brhub, error) {
-	var all []Brhub
-	err := db.C("brhubs").Find(nil).All(&all)
+func (db *DB) AllThemes() ([]Theme, error) {
+	var all []Theme
+	err := db.C("themes").Find(nil).All(&all)
 	if all == nil {
-		all = []Brhub{}
+		all = []Theme{}
 	}
 	return all, err
 }
 
-func (db *DB) Brhub(name string) (Brhub, error) {
-	var b Brhub
-	err := db.C("brhubs").Find(bson.M{"name": name}).One(&b)
-	return b, err
+func (db *DB) Theme(name string) (Theme, error) {
+	var theme Theme
+	err := db.C("themes").Find(bson.M{"name": name}).One(&theme)
+	return theme, err
 }
 
-func (db *DB) BrhubExists(name string) (bool, error) {
-	var b Brhub
-	err := db.C("brhubs").Find(bson.M{"name": name}).One(&b)
+func (db *DB) ThemeExists(name string) (bool, error) {
+	var b Theme
+	err := db.C("themes").Find(bson.M{"name": name}).One(&b)
 	if err != nil && err == mgo.ErrNotFound {
 		return false, nil
 	}
 	return true, err
 }
 
-func (db *DB) Items(brhubName string, skip, limit int) ([]*Item, bool, error) {
+func (db *DB) Items(themeName string, skip, limit int) ([]*Item, bool, error) {
 	items := make([]*Item, 0)
 	err := db.C("items").
-		Find(bson.M{"brhub.name": brhubName}).
+		Find(bson.M{"theme.name": themeName}).
 		Skip(skip).Limit(limit + 1).
 		Sort("-date").
 		All(&items)
@@ -259,8 +259,8 @@ type SearchResult struct {
 type SearchFunc func(*DB, string) (*SearchResult, error)
 
 func SearchThemes(db *DB, term string) (*SearchResult, error) {
-	var themes []*Brhub
-	err := db.C("brhubs").Find(
+	var themes []*Theme
+	err := db.C("themes").Find(
 		bson.M{"name": bson.RegEx{"(.*)" + term + "(.*)", "i"}}).All(&themes)
 	for _, t := range themes {
 		t.Title = t.Name

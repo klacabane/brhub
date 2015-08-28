@@ -16,7 +16,7 @@ import (
 var (
 	ctx        *Context
 	user_test  *db.User
-	brhub_test *db.Brhub
+	theme_test *db.Theme
 	item_test  *db.Item
 )
 
@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestInvalidAuth(t *testing.T) {
-	params := authp{Name: "foo", Password: "baz"}
+	params := struct{ Name, Password string }{"foo", "baz"}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/auth", bytes.NewBuffer(b))
@@ -51,7 +51,7 @@ func TestInvalidAuth(t *testing.T) {
 }
 
 func TestValidAuth(t *testing.T) {
-	params := authp{Name: "foo", Password: "bar"}
+	params := struct{ Name, Password string }{"foo", "bar"}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/auth", bytes.NewBuffer(b))
@@ -91,8 +91,8 @@ func TestTimeline(t *testing.T) {
 	assert.False(t, data.(page).Hasmore)
 }
 
-func TestCreateBrhub(t *testing.T) {
-	params := authp{Name: "test_brhub"}
+func TestCreateTheme(t *testing.T) {
+	params := struct{ Name string }{"test_theme"}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/api/b/", bytes.NewBuffer(b))
@@ -100,16 +100,16 @@ func TestCreateBrhub(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	code, data, err := CreateBrhub(ctx, web.C{}, req)
+	code, data, err := CreateTheme(ctx, web.C{}, req)
 	assert.Nil(t, err)
 	assert.Equal(t, 201, code)
 
-	brhub_test = data.(*db.Brhub)
-	assert.Equal(t, "test_brhub", brhub_test.Name)
+	theme_test = data.(*db.Theme)
+	assert.Equal(t, "test_theme", theme_test.Name)
 }
 
 func TestInvalidCreateItem(t *testing.T) {
-	params := itemp{"foo", "foobar", "lorem ipsum", db.TYPE_TEXT, ""}
+	params := struct{ Theme, Title, Content, Type string }{"foo", "foobar", "lorem ipsum", db.TYPE_TEXT}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/api/items/", bytes.NewBuffer(b))
@@ -126,12 +126,12 @@ func TestInvalidCreateItem(t *testing.T) {
 	code, data, err := CreateItem(ctx, c, req)
 	assert.Equal(t, 422, code)
 	assert.NotNil(t, err)
-	assert.Equal(t, "invalid brhub", err.Error())
+	assert.Equal(t, "invalid theme", err.Error())
 	assert.Nil(t, data)
 }
 
 func TestValidCreateItem(t *testing.T) {
-	params := itemp{brhub_test.Name, "foobar", "lorem ipsum", db.TYPE_TEXT, ""}
+	params := struct{ Theme, Title, Content, Type string }{theme_test.Name, "foobar", "lorem ipsum", db.TYPE_TEXT}
 	b, _ := json.Marshal(params)
 
 	req, err := http.NewRequest("POST", "/api/items/", bytes.NewBuffer(b))

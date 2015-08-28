@@ -115,7 +115,7 @@ var app = app || {};
         title: vm.title(),
         link: vm.link(),
         content: vm.content(),
-        brhub: vm.theme()
+        theme: vm.theme()
       }).then(
       function(item) {
         console.log(item);

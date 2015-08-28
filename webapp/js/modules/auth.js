@@ -4,10 +4,19 @@ app.banner = function() {
   return m('div.banner');
 };
 
-app.usermenu = function() {
+app.usermenu = function(active) {
   var user = storage.getUser();
-  return m('div.four.wide.column', [
-    m('div.ui.secondary.vertical.menu', [
+
+  return m('div.four.wide.column', {
+    
+    }, [
+    m('div.ui.secondary.vertical.menu', { 
+      config:function (elem) {
+        $($(elem)
+          .children()[active])
+          .addClass('active'); 
+      },
+    }, [
       m('a.item', {href: '/#/users/'+user.name}, user.name),
       m('a.item', {href: '/#/'}, 'home'),
       m('a.item', {onclick: function() {

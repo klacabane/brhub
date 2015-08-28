@@ -22,42 +22,23 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-type authp struct {
-	Name, Password string
-}
-
-type brhubp struct {
-	Name, Color string
-}
-
-type itemp struct {
-	Brhub, Title, Content, Type, Link string
-}
-
-type commentp struct {
-	Item    bson.ObjectId
-	Content string
-	// marshal as string to avoid error when empty
-	Parent string
-
-	parent bson.ObjectId
-}
-
 type page struct {
 	Hasmore bool       `json:"hasmore"`
 	Items   []*db.Item `json:"items"`
 }
 
 func decodeParams(rc io.Reader, params interface{}) error {
-	decoder := json.NewDecoder(rc)
-	return decoder.Decode(&params)
+	return json.NewDecoder(rc).Decode(&params)
 }
 
 func Auth(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	var params authp
+	var params struct {
+		Name, Password string
+	}
 	if err := decodeParams(r.Body, &params); err != nil {
 		return 400, nil, errors.New(http.StatusText(400))
 	}
+
 	session := appCtx.SessionClone()
 	defer session.Close()
 
@@ -107,10 +88,10 @@ func Items(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) 
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	_, err := session.DB().Brhub(c.URLParams["name"])
+	_, err := session.DB().Theme(c.URLParams["name"])
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 422, nil, errors.New("invalid brhub")
+			return 422, nil, errors.New("invalid theme")
 		}
 		return 500, nil, errors.New(http.StatusText(500))
 	}
@@ -147,7 +128,9 @@ func Item(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 }
 
 func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	var params itemp
+	var params struct {
+		Theme, Title, Content, Type, Link string
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&params); err != nil {
@@ -161,10 +144,10 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	b, err := session.DB().Brhub(params.Brhub)
+	theme, err := session.DB().Theme(params.Theme)
 	if err != nil {
 		if err == mgo.ErrNotFound {
-			return 422, nil, errors.New("invalid brhub")
+			return 422, nil, errors.New("invalid theme")
 		}
 		return 500, nil, err
 	}
@@ -172,7 +155,7 @@ func CreateItem(appCtx *Context, c web.C, r *http.Request) (int, interface{}, er
 	item := db.NewItem()
 	item.SetTitleAndTags(params.Title)
 	item.Content = params.Content
-	item.Brhub = b
+	item.Theme = theme
 	item.Type = params.Type
 	// validate link
 	item.Link = params.Link
@@ -234,20 +217,22 @@ func Star(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	}
 	return status, dif, err
 }
-func AllBrhubs(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+func AllThemes(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
 	session := appCtx.SessionClone()
 	defer session.Close()
 
 	status := 200
-	all, err := session.DB().AllBrhubs()
+	all, err := session.DB().AllThemes()
 	if err != nil {
 		status = 500
 	}
 	return status, all, err
 }
 
-func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	var params brhubp
+func CreateTheme(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
+	var params struct {
+		Name, Color string
+	}
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&params); err != nil {
@@ -257,31 +242,37 @@ func CreateBrhub(appCtx *Context, c web.C, r *http.Request) (int, interface{}, e
 	session := appCtx.SessionClone()
 	defer session.Close()
 
-	if exists, err := session.DB().BrhubExists(params.Name); err != nil {
+	if exists, err := session.DB().ThemeExists(params.Name); err != nil {
 		return 500, nil, err
 	} else if exists {
-		return 422, nil, fmt.Errorf("brhub %s already exists", params.Name)
+		return 422, nil, fmt.Errorf("theme %s already exists", params.Name)
 	}
 
-	b := &db.Brhub{
+	theme := &db.Theme{
 		Id:       bson.NewObjectId(),
 		Name:     params.Name,
 		ColorHex: colorful.HappyColor().Hex(),
 	}
 
 	status := 201
-	err := session.DB().AddBrhub(b)
+	err := session.DB().AddTheme(theme)
 	if err != nil {
 		status = 500
 	}
-	return status, b, err
+	return status, theme, err
 }
 
 func CreateComment(appCtx *Context, c web.C, r *http.Request) (int, interface{}, error) {
-	var params commentp
+	var params struct {
+		Item    bson.ObjectId
+		Content string
+		// marshal as string to avoid error when empty
+		Parent string
 
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&params); err != nil {
+		parent bson.ObjectId
+	}
+
+	if err := decodeParams(r.Body, &params); err != nil {
 		return 422, nil, err
 	}
 

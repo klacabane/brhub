@@ -55,19 +55,18 @@ var app = app || {};
           m('div.item-meta', [
             m('a[style="display: block; font-size: 16px; margin-bottom: 5px;"]', {href: item.type === 'link' ? item.link : '/#/items/'+item.id}, item.title),
             m('p', [
-              'by ',
-              m('a.text-info', {href: '/#/users/'+item.author.name}, item.author.name),
+              m('span', ['by ', m('a.text-info', {href: '/#/users/'+item.author.name}, item.author.name)]),
               m('em', {
                 onclick: function(e) {
-                  m.route('/b/'+item.brhub.name);
+                  m.route('/b/'+item.theme.name);
                 },
                 style: {
                   display: module.vm.src === 'timeline' ? 'inline' : 'none',
-                  color: item.brhub.color,
+                  color: item.theme.color,
                   cursor: 'pointer',
                   'margin-left': '10px'
                 }
-              }, item.brhub.name)
+              }, item.theme.name)
             ])
           ]),
           m('p', [

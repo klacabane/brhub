@@ -30,7 +30,7 @@ app.feed = function(src) {
     return [
       app.banner(),
       m('div.ui.grid', [
-        app.usermenu(),
+        app.usermenu(1),
         m('div.ten.wide.column', [
           m('button.ui.tiny.button[type="button"][style="margin-right: 5px;"]', {onclick: module.vm.submit}, 'new item'),
           m('button.ui.tiny.button[type="button"]', {onclick: module.vm.newTheme}, 'new theme'),

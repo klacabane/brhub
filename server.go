@@ -18,8 +18,8 @@ func main() {
 	api.Use(handlers.ValidateToken)
 	api.Get("/api/timeline/:skip/:limit", handlers.AppHandler{ctx, handlers.Timeline})
 
-	api.Post("/api/b/", handlers.AppHandler{ctx, handlers.CreateBrhub})
-	api.Get("/api/b/", handlers.AppHandler{ctx, handlers.AllBrhubs})
+	api.Post("/api/b/", handlers.AppHandler{ctx, handlers.CreateTheme})
+	api.Get("/api/b/", handlers.AppHandler{ctx, handlers.AllThemes})
 	api.Get("/api/b/:name/:skip/:limit", handlers.AppHandler{ctx, handlers.Items})
 
 	api.Post("/api/items/", handlers.AppHandler{ctx, handlers.CreateItem})

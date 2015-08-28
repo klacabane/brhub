@@ -4,13 +4,13 @@ var app = app || {};
   'use strict';
 
   module.controller = function() {
-    var user = storage.getUser();
-    if (user === null) return m.route('/');
+    if (storage.getUser() === null) return m.route('/');
   }
 
   module.view = function(ctrl) {
     return [
-      app.banner()
+      app.banner(),
+      app.usermenu(0)
     ];
   }
 })(app.profile = {});

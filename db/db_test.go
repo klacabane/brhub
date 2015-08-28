@@ -15,7 +15,7 @@ import (
 
 var (
 	db_test       *DB
-	brhub_test    *Brhub
+	theme_test    *Theme
 	item_test     *Item
 	comments_test []*Comment
 )
@@ -31,9 +31,9 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-func TestAddBrhub(t *testing.T) {
-	brhub_test = &Brhub{Id: bson.NewObjectId(), Name: "Test"}
-	assert.Nil(t, db_test.AddBrhub(brhub_test))
+func TestAddTheme(t *testing.T) {
+	theme_test = &Theme{Id: bson.NewObjectId(), Name: "Test"}
+	assert.Nil(t, db_test.AddTheme(theme_test))
 }
 
 func TestAddItem(t *testing.T) {

@@ -68,7 +68,7 @@ type Item struct {
 	Link         string        `json:"link,omitempty" bson:"link,omitempty"`
 	Content      string        `json:"content,omitempty" bson:"content,omitempty"`
 	Tags         []string      `json:"tags"`
-	Brhub        Brhub         `json:"brhub"`
+	Theme        Theme         `json:"theme"`
 	Author       Author        `json:"author"`
 	Comments     []*Comment    `json:"comments" bson:"-"`
 	CommentCount int           `json:"commentCount" bson:"commentCount"`
@@ -112,7 +112,7 @@ func NewItem() *Item {
 	}
 }
 
-type Brhub struct {
+type Theme struct {
 	Id       bson.ObjectId `json:"id" bson:"_id,omitempty"`
 	Name     string        `json:"name"`
 	ColorHex string        `json:"color"`
