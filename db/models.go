@@ -12,7 +12,7 @@ import (
 	"labix.org/v2/mgo/bson"
 )
 
-var tagExp = regexp.MustCompile("(\\[[a-zA-Z0-9-\\s]+\\])")
+var tagExp = regexp.MustCompile(`(?i)\[([a-z0-9$\s]+)\]`)
 
 type Author struct {
 	Id   bson.ObjectId `json:"id" bson:"_id,omitempty"`
@@ -92,15 +92,14 @@ func (item *Item) Childrens() []*Comment {
 }
 
 func (item *Item) SetTitleAndTags(s string) {
-	tags := tagExp.FindAllString(s, -1)
-	if len(tags) > 0 {
-		item.Tags = make([]string, len(tags))
-		for i, raw := range tags {
-			s = strings.Replace(s, raw, "", 1)
-			item.Tags[i] = strings.TrimSpace(raw[1 : len(raw)-1])
-		}
+	tags := tagExp.FindAllStringSubmatch(s, -1)
+	item.Tags = make([]string, len(tags))
+	for i, tag := range tags {
+		item.Tags[i] = strings.TrimSpace(tag[1])
 	}
-	item.Title = strings.TrimSpace(s)
+
+	item.Title = strings.TrimSpace(
+		tagExp.ReplaceAllString(s, ""))
 }
 
 func NewItem() *Item {

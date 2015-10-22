@@ -13,7 +13,7 @@ import (
 func ValidateToken(c *web.C, h http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		if c.Env == nil {
-			c.Env = map[string]interface{}{}
+			c.Env = map[interface{}]interface{}{}
 		}
 
 		author, err := parseToken(r.Header.Get("X-token"))

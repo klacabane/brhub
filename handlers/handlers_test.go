@@ -76,7 +76,7 @@ func TestTimeline(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 		URLParams: map[string]string{
@@ -118,7 +118,7 @@ func TestInvalidCreateItem(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 	}
@@ -140,7 +140,7 @@ func TestValidCreateItem(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 	}
@@ -166,7 +166,7 @@ func TestInvalidCreateComment(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 	}
@@ -189,7 +189,7 @@ func TestValidCreateComment(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 	}
@@ -215,7 +215,7 @@ func TestCreateCommentWithParent(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 	}
@@ -236,7 +236,7 @@ func TestItem(t *testing.T) {
 	}
 
 	c := web.C{
-		Env: map[string]interface{}{
+		Env: map[interface{}]interface{}{
 			"user": db.Author{Id: user_test.Id, Name: user_test.Name},
 		},
 		URLParams: map[string]string{

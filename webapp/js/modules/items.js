@@ -10,6 +10,8 @@ var app = app || {};
     sendReply: function(e) {
       e.preventDefault();
 
+      if (!vm.reply().length) return;
+
       Comments.create({
         item: vm.item().id,
         content: vm.reply()

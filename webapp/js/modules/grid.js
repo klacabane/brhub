@@ -39,6 +39,7 @@ var app = app || {};
 
   module.view = function(ctrl) {
     return m('div.item-container', [
+
       module.vm.items().map(function(item) {
         return m('div.item-row', [
         /*
@@ -54,6 +55,9 @@ var app = app || {};
         */
           m('div.item-meta', [
             m('a[style="display: block; font-size: 16px; margin-bottom: 5px;"]', {href: item.type === 'link' ? item.link : '/#/items/'+item.id}, item.title),
+            m('', item.tags.map(tag => {
+              return m('a.ui.horizontal.label', tag); 
+            })),
             m('p', [
               m('span', ['by ', m('a.text-info', {href: '/#/users/'+item.author.name}, item.author.name)]),
               m('em', {
@@ -76,18 +80,16 @@ var app = app || {};
           ])
         ])
       }),
+      
       m('button.ui.tiny.icon.button', {
         onclick: module.vm.getPrevItems.bind(module.vm), 
         disabled: module.vm.showPrev ? '' : 'disabled'
-      }, [
-        m('i.left.chevron.icon')
-      ]),
+      }, m('i.left.chevron.icon')),
+
       m('button.ui.tiny.icon.button', {
         onclick: module.vm.getNextItems.bind(module.vm), 
         disabled: module.vm.showNext ? '' : 'disabled'
-      }, [
-        m('i.right.chevron.icon')
-      ])
+      },  m('i.right.chevron.icon'))
     ]);
   }
 })(app.grid = {});

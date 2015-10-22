@@ -9,8 +9,7 @@ var commentModule = function(parent) {
     sendReply: function(e) {
       e.preventDefault();
 
-      if (!module.vm.reply().length)
-        return;
+      if (!module.vm.reply().length) return;
 
       Comments.create({
         item: parent.item,

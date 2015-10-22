@@ -30,7 +30,6 @@ Item.create = function(data) {
 
 var Comments = {};
 Comments.create = function(data) {
-  console.log(data)
   return Req({
     method: 'POST',
     ep: '/api/comments/',
